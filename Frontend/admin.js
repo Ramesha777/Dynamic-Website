@@ -2,7 +2,7 @@
 import { firebaseConfig } from '../Backend/firebaseconfig.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Initialize Firebase (modular)
@@ -29,6 +29,21 @@ onAuthStateChanged(auth, (user) => {
     loadAllReservations();
     loadEvents();
     loadSettings();
+    loadUsers();
+    
+    // Wire settings form after user is authenticated
+    setTimeout(() => {
+      const settingsForm = document.getElementById('settingsForm');
+      if (settingsForm) {
+        settingsForm.addEventListener('submit', handleSettingsSubmit);
+        console.log('Settings form listener attached');
+      }
+      const addEventBtn = document.getElementById('addEventBtn');
+      if (addEventBtn) addEventBtn.addEventListener('click', (e) => { e.preventDefault(); showEventModal(); });
+      
+      const addUserBtn = document.getElementById('addUserBtn');
+      if (addUserBtn) addUserBtn.addEventListener('click', (e) => { e.preventDefault(); showUserModal(); });
+    }, 200);
   } else {
     // User is not logged in
     console.log('User is not authenticated');
@@ -114,6 +129,41 @@ navLinks.forEach(link => {
 });
 
 // Load all reservations for Reservations page
+// Generate personalized message with customer details
+function generateReservationMessage(data) {
+  const date = data.date ? new Date(data.date).toLocaleDateString() : 'TBD';
+  const message = `Your booking at Whitmore Reans Bars & Restaurant!\n\nName: ${data.name}\nDate: ${date}\nTime: ${data.time}\nGuests: ${data.guests}\n has been confirmed \nWe are happy to have you dine with us and look forward to providing you with an exceptional dining experience. If you have any questions or need to make changes to your reservation, please don't hesitate to contact us.\n\nBest regards,\nWhitmore Reans Bars & Restaurant Team`;
+  return message;
+}
+
+// Send SMS via default SMS app
+function sendSMS(phone, name, date, time, guests) {
+  const message = generateReservationMessage({ name, date, time, guests });
+  const encodedMessage = encodeURIComponent(message);
+  window.location.href = `sms:${phone}?body=${encodedMessage}`;
+}
+
+// Send WhatsApp message
+function sendWhatsApp(phone, name, date, time, guests) {
+  const message = generateReservationMessage({ name, date, time, guests });
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappPhone = phone.replace(/\D/g, '');
+  window.open(`https://wa.me/${whatsappPhone}?text=${encodedMessage}`, '_blank');
+}
+
+// Send Email
+function sendEmail(email, name, date, time, guests) {
+  const subject = encodeURIComponent('Reservation Confirmation - Whitmore Reans');
+  const message = generateReservationMessage({ name, date, time, guests });
+  const body = encodeURIComponent(message);
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+// Expose functions to global scope for event delegation
+window.sendSMS = sendSMS;
+window.sendWhatsApp = sendWhatsApp;
+window.sendEmail = sendEmail;
+
 async function loadAllReservations() {
   try {
     const q = query(collection(db, "reservations"), orderBy("timestamp", "desc"));
@@ -132,19 +182,166 @@ async function loadAllReservations() {
       const row = document.createElement('tr');
       row.setAttribute('data-id', id);
 
-      row.innerHTML = `
-        <td>${escapeHtml(data.code || id)}</td>
-        <td>${escapeHtml(data.name || '')}</td>
-        <td>${escapeHtml(data.email || '')}</td>
-        <td>${escapeHtml(data.phone || '')}</td>
-        <td>${escapeHtml(data.date || '')}</td>
-        <td>${escapeHtml(data.time || '')}</td>
-        <td>${escapeHtml(String(data.guests || ''))}</td>
-        <td><span class="status ${statusClass}">${statusText}</span></td>
-        <td><button class="action-btn edit-reservation" data-id="${id}">Edit</button></td>
-      `;
+      // Code
+      const codeCell = document.createElement('td');
+      codeCell.textContent = data.code || id;
+      row.appendChild(codeCell);
 
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'action-btn delete-reservation';
+        deleteBtn.style.background = '#d9534f';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.setAttribute('data-id', id);
+        actionCell.appendChild(deleteBtn);
+      // Name
+      const nameCell = document.createElement('td');
+      nameCell.textContent = data.name || '';
+      row.appendChild(nameCell);
+
+      // Email
+      const emailCell = document.createElement('td');
+      emailCell.textContent = data.email || '';
+      row.appendChild(emailCell);
+
+        const deleteBtn = e.target.closest('.delete-reservation');
+      // Phone
+      const phoneCell = document.createElement('td');
+      phoneCell.textContent = data.phone || '';
+      row.appendChild(phoneCell);
+
+      // Date
+      const dateCell = document.createElement('td');
+      dateCell.textContent = data.date || '';
+      row.appendChild(dateCell);
+
+      // Time
+      const timeCell = document.createElement('td');
+      timeCell.textContent = data.time || '';
+      row.appendChild(timeCell);
+
+      // Guests
+      const guestsCell = document.createElement('td');
+      guestsCell.textContent = data.guests || '';
+      row.appendChild(guestsCell);
+
+      // Status
+      const statusCell = document.createElement('td');
+      const statusSpan = document.createElement('span');
+      statusSpan.className = `status ${statusClass}`;
+      statusSpan.textContent = statusText;
+      statusCell.appendChild(statusSpan);
+      row.appendChild(statusCell);
+
+      // Actions
+      const actionCell = document.createElement('td');
+
+        if (deleteBtn) {
+          const id = deleteBtn.getAttribute('data-id');
+          if (confirm('Are you sure you want to delete this reservation?')) {
+            deleteReservation(id);
+          }
+          return;
+        }
+      actionCell.style.display = 'flex';
+      actionCell.style.gap = '4px';
+      actionCell.style.flexWrap = 'wrap';
+
+      // Edit button
+
+  // Delete reservation by ID
+  async function deleteReservation(id) {
+    try {
+      await deleteDoc(doc(db, 'reservations', id));
+      alert('Reservation deleted successfully!');
+      loadAllReservations();
+    } catch (err) {
+      console.error('Error deleting reservation:', err);
+      alert('Failed to delete reservation: ' + err.message);
+    }
+  }
+      const editBtn = document.createElement('button');
+      editBtn.className = 'action-btn edit-reservation';
+      editBtn.setAttribute('data-id', id);
+      editBtn.textContent = 'Edit';
+      actionCell.appendChild(editBtn);
+
+      // SMS button
+      if (data.phone) {
+        const smsBtn = document.createElement('button');
+        smsBtn.className = 'action-btn sms-btn';
+        smsBtn.textContent = 'SMS';
+        smsBtn.setAttribute('data-phone', data.phone);
+        smsBtn.setAttribute('data-name', data.name);
+        smsBtn.setAttribute('data-date', data.date);
+        smsBtn.setAttribute('data-time', data.time);
+        smsBtn.setAttribute('data-guests', data.guests);
+        actionCell.appendChild(smsBtn);
+      }
+
+      // WhatsApp button
+      if (data.phone) {
+        const whatsappBtn = document.createElement('button');
+        whatsappBtn.className = 'action-btn whatsapp-btn';
+        whatsappBtn.textContent = 'WhatsApp';
+        whatsappBtn.setAttribute('data-phone', data.phone);
+        whatsappBtn.setAttribute('data-name', data.name);
+        whatsappBtn.setAttribute('data-date', data.date);
+        whatsappBtn.setAttribute('data-time', data.time);
+        whatsappBtn.setAttribute('data-guests', data.guests);
+        actionCell.appendChild(whatsappBtn);
+      }
+
+      // Email button
+      if (data.email) {
+        const emailBtn = document.createElement('button');
+        emailBtn.className = 'action-btn email-btn';
+        emailBtn.textContent = 'Email';
+        emailBtn.setAttribute('data-email', data.email);
+        emailBtn.setAttribute('data-name', data.name);
+        emailBtn.setAttribute('data-date', data.date);
+        emailBtn.setAttribute('data-time', data.time);
+        emailBtn.setAttribute('data-guests', data.guests);
+        actionCell.appendChild(emailBtn);
+      }
+
+      row.appendChild(actionCell);
       tbody.appendChild(row);
+    });
+
+    // Event delegation for message buttons
+    tbody.addEventListener('click', (e) => {
+      const smsBtn = e.target.closest('.sms-btn');
+      const whatsappBtn = e.target.closest('.whatsapp-btn');
+      const emailBtn = e.target.closest('.email-btn');
+
+      if (smsBtn) {
+        const phone = smsBtn.getAttribute('data-phone');
+        const name = smsBtn.getAttribute('data-name');
+        const date = smsBtn.getAttribute('data-date');
+        const time = smsBtn.getAttribute('data-time');
+        const guests = smsBtn.getAttribute('data-guests');
+        window.sendSMS(phone, name, date, time, guests);
+      }
+
+      if (whatsappBtn) {
+        const phone = whatsappBtn.getAttribute('data-phone');
+        const name = whatsappBtn.getAttribute('data-name');
+        const date = whatsappBtn.getAttribute('data-date');
+        const time = whatsappBtn.getAttribute('data-time');
+        const guests = whatsappBtn.getAttribute('data-guests');
+        window.sendWhatsApp(phone, name, date, time, guests);
+      }
+
+      if (emailBtn) {
+        const email = emailBtn.getAttribute('data-email');
+        const name = emailBtn.getAttribute('data-name');
+        const date = emailBtn.getAttribute('data-date');
+        const time = emailBtn.getAttribute('data-time');
+        const guests = emailBtn.getAttribute('data-guests');
+        window.sendEmail(email, name, date, time, guests);
+      }
     });
   } catch (error) {
     console.error('Error loading reservations:', error);
@@ -404,12 +601,171 @@ async function handleSettingsSubmit(e) {
   }
 }
 
-// Wire settings form (if present)
-const settingsForm = document.getElementById('settingsForm');
-if (settingsForm) {
-  settingsForm.addEventListener('submit', handleSettingsSubmit);
+// ============ USER MANAGEMENT ============
+
+// Load all admin users from Firestore
+async function loadUsers() {
+  try {
+    const q = query(collection(db, 'adminUsers'), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const tbody = document.getElementById('usersBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    // Add event listener for delete buttons
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const id = docSnap.id;
+
+      const row = document.createElement('tr');
+      row.setAttribute('data-id', id);
+
+      const nameCell = document.createElement('td');
+      nameCell.textContent = data.name || '';
+      row.appendChild(nameCell);
+
+      const emailCell = document.createElement('td');
+      emailCell.textContent = data.email || '';
+      row.appendChild(emailCell);
+
+      const dateCell = document.createElement('td');
+      const createdAt = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'N/A';
+      dateCell.textContent = createdAt;
+      row.appendChild(dateCell);
+
+      const actionCell = document.createElement('td');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'action-btn';
+      deleteBtn.style.background = '#d9534f';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.setAttribute('data-user-id', id);
+      deleteBtn.setAttribute('data-user-email', data.email);
+      actionCell.appendChild(deleteBtn);
+      row.appendChild(actionCell);
+
+      tbody.appendChild(row);
+    });
+
+    // Event delegation for delete buttons
+    tbody.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('button[data-user-id]');
+      if (deleteBtn) {
+        const userId = deleteBtn.getAttribute('data-user-id');
+        const userEmail = deleteBtn.getAttribute('data-user-email');
+        if (confirm(`Are you sure you want to delete user: ${userEmail}?`)) {
+          deleteAdminUser(userId, userEmail);
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error loading users:', error);
+  }
 }
 
-// Wire Add Event button (if present)
-const addEventBtn = document.getElementById('addEventBtn');
-if (addEventBtn) addEventBtn.addEventListener('click', (e) => { e.preventDefault(); showEventModal(); });
+// Show modal to create new user
+function showUserModal() {
+  let modal = document.getElementById('userModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'userModal';
+    modal.style.position = 'fixed';
+    modal.style.left = '0';
+    modal.style.top = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.background = 'rgba(0,0,0,0.5)';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `
+      <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
+        <h3 style="margin-top:0">Create New User</h3>
+        <div style="margin:8px 0"><label>Name</label><input id="userName" type="text" style="width:100%;padding:8px;margin-top:6px;"/></div>
+        <div style="margin:8px 0"><label>Email</label><input id="userEmail" type="email" style="width:100%;padding:8px;margin-top:6px;"/></div>
+        <div style="margin:8px 0"><label>Password</label><input id="userPassword" type="password" style="width:100%;padding:8px;margin-top:6px;"/></div>
+        <div style="margin:8px 0"><label>Confirm Password</label><input id="userPasswordConfirm" type="password" style="width:100%;padding:8px;margin-top:6px;"/></div>
+        <div style="text-align:right;margin-top:12px;">
+          <button id="userCancel" style="margin-right:8px;padding:8px 15px;background:#ccc;border:none;border-radius:4px;cursor:pointer;">Cancel</button>
+          <button id="userSave" style="padding:8px 15px;background:#c9a962;color:#fff;border:none;border-radius:4px;cursor:pointer;">Create User</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#userCancel').addEventListener('click', () => modal.remove());
+  }
+
+  const saveBtn = modal.querySelector('#userSave');
+  const onSave = async () => {
+    const name = modal.querySelector('#userName').value.trim();
+    const email = modal.querySelector('#userEmail').value.trim();
+    const password = modal.querySelector('#userPassword').value;
+    const passwordConfirm = modal.querySelector('#userPasswordConfirm').value;
+
+    if (!name || !email || !password) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      // Create user in Firebase Auth
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Store user info in Firestore
+      await setDoc(doc(db, 'adminUsers', userCred.user.uid), {
+        name,
+        email,
+        createdAt: new Date(),
+        uid: userCred.user.uid
+      });
+
+      alert('User created successfully!');
+      modal.remove();
+      saveBtn.removeEventListener('click', onSave);
+      loadUsers();
+    } catch (err) {
+      console.error('Error creating user:', err);
+      alert('Error: ' + err.message);
+    }
+  };
+  saveBtn.addEventListener('click', onSave);
+}
+
+// Delete admin user
+async function deleteAdminUser(userId, userEmail) {
+  try {
+    // Get current user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      alert('You must be logged in');
+      return;
+    }
+
+    // Cannot delete self
+    if (currentUser.email === userEmail) {
+      alert('You cannot delete your own account');
+      return;
+    }
+
+    // Delete from Firestore
+    await deleteDoc(doc(db, 'adminUsers', userId));
+
+    console.log('User deleted from Firestore:', userEmail);
+    alert('User deleted successfully!');
+    loadUsers();
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    alert('Failed to delete user: ' + err.message);
+  }
+}
+

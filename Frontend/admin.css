@@ -309,6 +309,28 @@ body {
   background: #b8984f;
 }
 
+/* Message buttons */
+.sms-btn {
+  background: #007AFF !important;
+}
+.sms-btn:hover {
+  background: #0051D5 !important;
+}
+
+.whatsapp-btn {
+  background: #25D366 !important;
+}
+.whatsapp-btn:hover {
+  background: #1DA851 !important;
+}
+
+.email-btn {
+  background: #EA4335 !important;
+}
+.email-btn:hover {
+  background: #C5221F !important;
+}
+
 /* Primary Button */
 .btn-primary {
   padding: 12px 25px;

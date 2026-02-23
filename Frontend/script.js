@@ -267,13 +267,14 @@ window.addEventListener('scroll', () => {
     : 'rgba(10,10,10,0.92)';
 });
 // save reservation to firesbase firestore
-async function saveReservation(name, email, date, time, guests) {
+async function saveReservation(name, email, phone, date, time, guests) {
   const reservationCode = Math.floor(1000 + Math.random() * 9000);
   
   try {
     await window.addDoc(window.collection(window.db, 'reservations'), {
       name,
       email,
+      phone,
       date,
       time,
       guests,
@@ -296,11 +297,12 @@ if (document.getElementById('reservationForm')) {
     e.preventDefault();
     const name = document.getElementById('resName').value;
     const email = document.getElementById('resEmail').value;
+    const phone = document.getElementById('resPhone').value;
     const date = document.getElementById('resDate').value;
     const time = document.getElementById('resTime').value;
     const guests = document.getElementById('resGuests').value;
-    
-    saveReservation(name, email, date, time, guests);
+
+    saveReservation(name, email, phone, date, time, guests);
   });
 }
 

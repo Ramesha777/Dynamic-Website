@@ -24,7 +24,8 @@
     <ul class="admin-nav-links">
       <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
       <li><a href="#" data-page="reservations">Reservations</a></li>
-     <li><a href="#" data-page="menu">Events</a></li>
+      <li><a href="#" data-page="menu">Events</a></li>
+      <li><a href="#" data-page="users">Users</a></li>
       <li><a href="#" data-page="settings">Settings</a></li>
     </ul>
     <div class="admin-user">
@@ -50,16 +51,6 @@
           <div class="stat-info">
             <h3>Today's Reservations</h3>
             <p class="stat-number" id="todayReservationsCount">0</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">💰</div>
-          <div class="stat-info">
           </div>
         </div>
         <div class="stat-card">
@@ -148,11 +139,29 @@
       </div>
     </div>
 
-    <!-- Customers Page -->
-    <div class="admin-page" id="page-customers">
+    <!-- Users Page -->
+    <div class="admin-page" id="page-users">
       <div class="page-header">
-        <h1>Customers</h1>
-        <p>View and manage customer database</p>
+        <h1>Users</h1>
+        <p>Create and manage admin users</p>
+      </div>
+      <div class="admin-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <button id="addUserBtn" class="btn-primary">Add User</button>
+        </div>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody">
+            <!-- Loaded via JS -->
+          </tbody>
+        </table>
       </div>
     </div>
 
