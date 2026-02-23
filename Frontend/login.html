@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login – Whitmore Reans</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <span class="logo-icon">🍽️</span>
+    <div class="restaurant-name">
+      Whitmore Reans
+      <em>Bars & Restaurant</em>
+    </div>
+    <p class="header-sub">Wolverhampton · WV6 0QN</p>
+    <div class="divider"></div>
+  </div>
+
+  <form class="form" id="loginForm">
+    <div class="form-group">
+      <label>Email</label>
+      <div class="input-wrap">
+        <span class="icon">📧</span>
+        <input type="email" id="email" placeholder="Enter your email" required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <div class="input-wrap">
+        <span class="icon">🔒</span>
+        <input type="password" id="password" placeholder="Enter your password" required>
+        <button type="button" class="toggle-pw" onclick="togglePw()">👁</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="remember">
+        <input type="checkbox"> Remember me
+      </label>
+      <a href="#" class="forgot">Forgot password?</a>
+    </div>
+
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+    
+    <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+  </form>
+
+  <div class="card-footer">
+    Bitterne Dr, Wolverhampton · <span>01902 000 000</span>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { firebaseConfig } from '../Backend/firebaseconfig.js';
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // Login form handler
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    loginBtn.textContent = 'Signing in…';
+    loginBtn.style.opacity = '0.7';
+    errorMessage.style.display = 'none';
+    
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login successful:', userCredential.user);
+      
+      // Store auth state in sessionStorage
+      sessionStorage.setItem('isAuthenticated', 'true');
+      sessionStorage.setItem('userEmail', userCredential.user.email);
+      
+      // Redirect to admin page
+      window.location.href = 'admin.html';
+    } catch (error) {
+      console.error('Login error:', error);
+      errorMessage.textContent = getErrorMessage(error.code);
+      errorMessage.style.display = 'block';
+    } finally {
+      loginBtn.textContent = 'Sign In';
+      loginBtn.style.opacity = '1';
+    }
+  });
+
+  function getErrorMessage(errorCode) {
+    switch (errorCode) {
+      case 'auth/invalid-email':
+        return 'Invalid email address format.';
+      case 'auth/user-disabled':
+        return 'This account has been disabled.';
+      case 'auth/user-not-found':
+        return 'No account found with this email.';
+      case 'auth/wrong-password':
+        return 'Incorrect password.';
+      case 'auth/invalid-credential':
+        return 'Invalid email or password.';
+      case 'auth/too-many-requests':
+        return 'Too many login attempts. Please try again later.';
+      default:
+        return 'Login failed. Please check your credentials and try again.';
+    }
+  }
+</script>
+
+<script>
+  function togglePw() {
+    const input = document.getElementById('password');
+    const btn = document.querySelector('.toggle-pw');
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁';
+    }
+  }
+</script>
+
+<style>
+  .error-message {
+    background-color: #fee;
+    color: #c00;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    text-align: center;
+  }
+</style>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whitmore Reans Bars & Restaurant</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<style>
+  .loader-container {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+  .loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #c9a962;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Whitmore Reans<br><span>Bars & Restaurant</span></div>
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#bar">Bar</a></li>
+    <li><a href="#events">Events</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#contact" class="nav-cta">Reserve a Table</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Wolverhampton's Finest</div>
+    <h1 class="hero-title">Where Flavour<em>Meets Soul</em></h1>
+    <p class="hero-sub">A premium dining & bar experience in the heart of Wolverhampton. Fine food, expertly crafted cocktails, and nights to remember.</p>
+    <div class="hero-btns">
+      <a href="#menu" class="btn-primary">Explore Our Menu</a>
+      <a href="#contact" class="btn-outline">Book a Table</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="hero-scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- HOURS STRIP -->
+<div class="hours-strip">
+  <div class="hours-item"><strong>Mon-Thu:</strong> 12pm - 11pm</div>
+  <div class="hours-item"><strong>Fri-Sat:</strong> 12pm - 1am</div>
+  <div class="hours-item"><strong>Sunday:</strong> 12pm - 10pm</div>
+  <div class="hours-item">Bitterne Dr, Wolverhampton WV6 0QN</div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-image street-view-container">
+   <img src="images/main.png" alt="Whitmore Reans Street View"
+      width="600" height="400">
+
+  </div>
+  <div class="about-text">
+    <div class="section-label">Our Story</div>
+    <h2 class="section-title">A Place to Dine, <em>Drink & Celebrate</em></h2>
+    <p>Whitmore Reans Bars & Restaurant is more than just a place to eat — it's a destination. Nestled in Wolverhampton, we've built a space where great food, quality drinks, and warm hospitality come together seamlessly.</p>
+    <p>From our carefully crafted seasonal menus to our vibrant bar scene, every visit promises something exceptional. Whether you're dining with family, catching up with friends, or marking a special occasion, we're here to make it unforgettable.</p>
+    <div class="about-features">
+      <div class="about-feat">Live Entertainment Nights</div>
+      <div class="about-feat">Private Dining Available</div>
+      <div class="about-feat">Seasonal British Menu</div>
+      <div class="about-feat">Premium Cocktail Bar</div>
+      <div class="about-feat">Event Hosting & Parties</div>
+      <div class="about-feat">Local & Craft Beers</div>
+    </div>
+  </div>
+</section>
+
+<!-- MENU -->
+<section id="menu">
+  <div class="section-label">What We Serve</div>
+  <h2 class="section-title">Our <em>Menu</em></h2>
+  <div class="menu-tabs">
+    <button class="menu-tab active" onclick="filterMenu(event,'starters')">Starters</button>
+    <button class="menu-tab" onclick="filterMenu(event,'mains')">Mains</button>
+    <button class="menu-tab" onclick="filterMenu(event,'grills')">Grills</button>
+    <button class="menu-tab" onclick="filterMenu(event,'desserts')">Desserts</button>
+    <button class="menu-tab" onclick="window.open('https://newrestauran.netlify.app','_blank')">Drinks</button>
+  </div>
+  <div class="menu-grid" id="menuGrid">
+    <!-- Filled by JS -->
+  </div>
+</section>
+
+<!-- BAR -->
+<section id="bar">
+  <div class="bar-left">
+    <div class="section-label">The Bar</div>
+    <h2 class="section-title">Crafted Drinks, <em>All Night Long</em></h2>
+    <p>Our bar team are masters of their craft — from classic cocktails shaken to perfection, to locally sourced real ales and an extensive wine list. Pull up a stool and let us take care of the rest.</p>
+    <a href="#contact" class="btn-primary" style="align-self: flex-start; margin-top: 1rem;">Book Bar Reservations</a>
+  </div>
+  <div class="bar-right">
+    <div class="bar-right-bg"></div>
+    <div class="bar-drinks">
+      <div class="drink-item"><div class="icon">C</div><strong>Cocktails</strong><span>Signature Mixes</span></div>
+      <div class="drink-item"><div class="icon">A</div><strong>Real Ales</strong><span>Local Craft Beers</span></div>
+      <div class="drink-item"><div class="icon">W</div><strong>Whiskeys</strong><span>Premium Selection</span></div>
+      <div class="drink-item"><div class="icon">V</div><strong>Fine Wines</strong><span>World Collection</span></div>
+      <div class="drink-item"><div class="icon">S</div><strong>Spirits</strong><span>Top-shelf Brands</span></div>
+      <div class="drink-item"><div class="icon">P</div><strong>Prosecco</strong><span>Celebration Ready</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- EVENTS -->
+<section id="events">
+  <div class="section-label">What's On</div>
+  <h2 class="section-title">Upcoming <em>Events</em></h2>
+  <div class="events-grid" id="eventsGrid">
+    <!-- Events loaded dynamically from Firestore -->
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="section-label">Our Space</div>
+  <h2 class="section-title">See the <em>Experience</em></h2>
+  <div class="gallery-grid">
+    <div class="gallery-item">
+      <div class="gallery-item-bg"></div>
+      <div class="gallery-overlay"><span>The Main Dining Room</span></div>
+      <div class="gallery-icon">D</div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-bg"></div>
+      <div class="gallery-overlay"><span>The Kitchen</span></div>
+      <div class="gallery-icon">K</div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-bg"></div>
+      <div class="gallery-overlay"><span>Garden Terrace</span></div>
+      <div class="gallery-icon">G</div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-bg"></div>
+      <div class="gallery-overlay"><span>The Bar Lounge</span></div>
+      <div class="gallery-icon">B</div>
+    </div>
+    <div class="gallery-item">
+      <div class="gallery-item-bg"></div>
+      <div class="gallery-overlay"><span>Private Dining</span></div>
+      <div class="gallery-icon">P</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div>
+    <div class="section-label">Find Us</div>
+    <h2 class="section-title">Book a <em>Table</em></h2>
+    <div class="contact-info">
+      <div class="contact-item">
+        <div class="contact-icon">A</div>
+        <div>
+          <strong>Address</strong>
+          <p>Bitterne Dr, Wolverhampton<br>WV6 0QN, England</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">P</div>
+        <div>
+          <strong>Phone</strong>
+          <p>+44 (0)1902 000 000</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">E</div>
+        <div>
+          <strong>Email</strong>
+          <p>hello@whitmoreReans.co.uk</p>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">H</div>
+        <div>
+          <strong>Opening Hours</strong>
+          <p>Mon-Thu: 12pm-11pm<br>Fri-Sat: 12pm-1am<br>Sunday: 12pm-10pm</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <form class="contact-form" id="reservationForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" placeholder="John" id="resName">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" placeholder="Smith" id="resLastName">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="john@email.com" id="resEmail">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" placeholder="+44 ..." id="resPhone">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="resDate">
+        </div>
+        <div class="form-group">
+          <label>Time</label>
+          <select id="resTime">
+            <option>12:00 PM</option>
+            <option>1:00 PM</option>
+            <option>2:00 PM</option>
+            <option>6:00 PM</option>
+            <option>7:00 PM</option>
+            <option>8:00 PM</option>
+            <option>9:00 PM</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Number of Guests</label>
+        <select id="resGuests">
+          <option>1 Guest</option>
+          <option>2 Guests</option>
+          <option>3 Guests</option>
+          <option>4 Guests</option>
+          <option>5-8 Guests</option>
+          <option>Large Party (9+)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Special Requests</label>
+        <textarea placeholder="Dietary requirements, occasion, accessibility needs..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Confirm Reservation</button>
+    </form>
+  </div>
+</section>
+
+<!-- WHATSAPP CONTACT -->
+<div class="whatsapp-contact">
+  <button class="whatsapp-btn" title="Contact us on WhatsApp">
+    <span class="whatsapp-icon">💬</span>
+  </button>
+  <div class="whatsapp-menu">
+    <a href="https://wa.me/447949866859" class="whatsapp-option" target="_blank">
+      <span class="option-icon">P</span>
+      <div>
+        <strong>Reservations</strong>
+        <span>General Inquiries</span>
+        <p>+44 7949866859</p>
+      </div>
+    </a>
+    <a href="https://wa.me/447949866859" class="whatsapp-option" target="_blank">
+      <span class="option-icon">S</span>
+      <div>
+        <strong>Sports</strong>
+        <p>+44 7949866859</p>
+      </div>
+    </a>
+    <a href="https://wa.me/447949866859" class="whatsapp-option" target="_blank">
+      <span class="option-icon">E</span>
+      <div>
+        <strong>Events Booking</strong>
+        <p>+44 7949866859</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- MAP -->
+<section id="map-section" class="map-section">
+  <div class="section-label">Navigation</div>
+  <h2 class="section-title">Find Us on <em>the Map</em></h2>
+  <div class="map-container">
+    <iframe
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2407.5928704633766!2d-2.1396076!3d52.589916!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487a0d0000000001%3A0x0!2sWhitmore%20Reans%2C%20Wolverhampton%20WV6%200QN!5e0!3m2!1sen!2suk!4v1624000000000"
+      width="100%"
+      height="500"
+      style="border:0;"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      class="map-iframe">
+    </iframe>
+  </div>
+  <div class="map-info">
+    <p><strong>Bitterne Dr, Wolverhampton WV6 0QN, England</strong></p>
+    <p>Located in the heart of Wolverhampton. Free parking available. Easily accessible by public transport.</p>
+    <a href="https://maps.google.com/maps?q=Bitterne+Dr,+Wolverhampton+WV6+0QN" target="_blank" class="btn-primary">Get Directions</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Whitmore Reans <span>Bars & Restaurant</span></div>
+  <ul class="footer-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#events">Events</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <p class="footer-copy">2025 Whitmore Reans Bars & Restaurant - Wolverhampton, WV6 0QN</p>
+</footer>
+
+<!-- Firebase SDK -->
+<script defer type="module">
+  import { firebaseConfig } from '../Backend/firebaseconfig.js';
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, onSnapshot, setDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Export to window for use in script.js
+  window.db = db;
+  window.collection = collection;
+  window.addDoc = addDoc;
+  window.getDocs = getDocs;
+  window.query = query;
+  window.orderBy = orderBy;
+  window.onSnapshot = onSnapshot;
+  window.setDoc = setDoc;
+  window.getDoc = getDoc;
+  window.doc = doc;
+
+  // Load script.js as regular script after Firebase is initialized
+  setTimeout(() => {
+    const script = document.createElement('script');
+    script.src = 'script.js';
+    script.onerror = () => console.error('Failed to load script.js');
+    document.head.appendChild(script);
+  }, 100);
+</script>
+</body>
+</html>
