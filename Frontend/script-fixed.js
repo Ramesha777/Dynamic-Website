@@ -251,6 +251,9 @@ function renderContactOptions(contacts) {
   
   menu.innerHTML = '';
   contacts.forEach(contact => {
+    // Guard: skip if phone is undefined or missing
+    if (!contact || !contact.phone) return;
+    
     const item = document.createElement('a');
     item.href = `https://wa.me/${contact.phone.replace(/\D/g, '')}`;
     item.target = '_blank';

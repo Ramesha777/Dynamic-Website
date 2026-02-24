@@ -339,7 +339,7 @@
   // Load script.js as regular script after Firebase is initialized
   setTimeout(() => {
     const script = document.createElement('script');
-    script.src = 'script.js';
+    script.src = 'script-fixed.js';
     script.onerror = () => console.error('Failed to load script.js');
     document.head.appendChild(script);
   }, 100);
