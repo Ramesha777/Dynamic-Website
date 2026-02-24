@@ -187,14 +187,6 @@ async function loadAllReservations() {
       codeCell.textContent = data.code || id;
       row.appendChild(codeCell);
 
-
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'action-btn delete-reservation';
-        deleteBtn.style.background = '#d9534f';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.setAttribute('data-id', id);
-        actionCell.appendChild(deleteBtn);
       // Name
       const nameCell = document.createElement('td');
       nameCell.textContent = data.name || '';
@@ -205,7 +197,6 @@ async function loadAllReservations() {
       emailCell.textContent = data.email || '';
       row.appendChild(emailCell);
 
-        const deleteBtn = e.target.closest('.delete-reservation');
       // Phone
       const phoneCell = document.createElement('td');
       phoneCell.textContent = data.phone || '';
@@ -236,31 +227,11 @@ async function loadAllReservations() {
 
       // Actions
       const actionCell = document.createElement('td');
-
-        if (deleteBtn) {
-          const id = deleteBtn.getAttribute('data-id');
-          if (confirm('Are you sure you want to delete this reservation?')) {
-            deleteReservation(id);
-          }
-          return;
-        }
       actionCell.style.display = 'flex';
       actionCell.style.gap = '4px';
       actionCell.style.flexWrap = 'wrap';
 
       // Edit button
-
-  // Delete reservation by ID
-  async function deleteReservation(id) {
-    try {
-      await deleteDoc(doc(db, 'reservations', id));
-      alert('Reservation deleted successfully!');
-      loadAllReservations();
-    } catch (err) {
-      console.error('Error deleting reservation:', err);
-      alert('Failed to delete reservation: ' + err.message);
-    }
-  }
       const editBtn = document.createElement('button');
       editBtn.className = 'action-btn edit-reservation';
       editBtn.setAttribute('data-id', id);
@@ -558,6 +529,9 @@ async function loadSettings() {
       document.getElementById('settingHoursMondayThursday').value = data.hoursMondayThursday || '12pm - 11pm';
       document.getElementById('settingHoursFridaySaturday').value = data.hoursFridaySaturday || '12pm - 1am';
       document.getElementById('settingHoursSunday').value = data.hoursSunday || '12pm - 10pm';
+
+      // Load contacts
+      renderContactsList(data.contacts || []);
     }
   } catch (err) {
     console.error('Error loading settings:', err);
@@ -582,6 +556,8 @@ async function handleSettingsSubmit(e) {
       return;
     }
 
+    // Gather contacts
+    const contacts = getContactsFromUI();
     const settingsDocRef = doc(db, 'settings', 'restaurant');
     await setDoc(settingsDocRef, {
       name,
@@ -591,6 +567,7 @@ async function handleSettingsSubmit(e) {
       hoursMondayThursday,
       hoursFridaySaturday,
       hoursSunday,
+      contacts,
       timestamp: new Date()
     }, { merge: true });
 
@@ -602,6 +579,69 @@ async function handleSettingsSubmit(e) {
 }
 
 // ============ USER MANAGEMENT ============
+// Contact Management Logic
+function renderContactsList(contacts) {
+  const list = document.getElementById('contactsList');
+  if (!list) return;
+  list.innerHTML = '';
+  contacts.forEach((contact, idx) => {
+    const div = document.createElement('div');
+    div.className = 'contact-item';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.gap = '8px';
+    div.style.marginBottom = '6px';
+    div.innerHTML = `
+      <input type="text" class="contact-type" value="${escapeHtml(contact.type)}" placeholder="Type (e.g. WhatsApp)" style="width:100px;" />
+      <input type="text" class="contact-value" value="${escapeHtml(contact.value)}" placeholder="Number or Link" style="width:180px;" />
+      <button type="button" class="edit-contact-btn">Edit</button>
+      <button type="button" class="remove-contact-btn">Remove</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function getContactsFromUI() {
+  const list = document.getElementById('contactsList');
+  if (!list) return [];
+  const items = list.querySelectorAll('.contact-item');
+  const contacts = [];
+  items.forEach(item => {
+    const type = item.querySelector('.contact-type').value.trim();
+    const value = item.querySelector('.contact-value').value.trim();
+    if (type && value) contacts.push({ type, value });
+  });
+  return contacts;
+}
+
+document.addEventListener('click', (e) => {
+  // Add contact
+  if (e.target && e.target.id === 'addContactBtn') {
+    const list = document.getElementById('contactsList');
+    const div = document.createElement('div');
+    div.className = 'contact-item';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.gap = '8px';
+    div.style.marginBottom = '6px';
+    div.innerHTML = `
+      <input type="text" class="contact-type" value="" placeholder="e.g. WhatsApp, Email" style="width:100px;" />
+      <input type="text" class="contact-value" value="" placeholder="Number or email address" style="width:180px;" />
+      <button type="button" class="edit-contact-btn">Edit</button>
+      <button type="button" class="remove-contact-btn">Remove</button>
+    `;
+    list.appendChild(div);
+  }
+  // Remove contact
+  if (e.target && e.target.classList.contains('remove-contact-btn')) {
+    e.target.parentElement.remove();
+  }
+  // Edit contact (focus fields)
+  if (e.target && e.target.classList.contains('edit-contact-btn')) {
+    const item = e.target.parentElement;
+    item.querySelector('.contact-type').focus();
+  }
+});
 
 // Load all admin users from Firestore
 async function loadUsers() {
@@ -768,4 +808,3 @@ async function deleteAdminUser(userId, userEmail) {
     alert('Failed to delete user: ' + err.message);
   }
 }
-
