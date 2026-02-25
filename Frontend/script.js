@@ -188,6 +188,15 @@ function subscribeToRestaurantSettings() {
       if (navLogoEl && d.name) {
         navLogoEl.innerHTML = `${d.name}<br><span>Bars & Restaurant</span>`;
       }
+      // Update Restaurant Name in Footer
+      const footerNameEl = document.querySelector('.footer-copy span');
+      if (footerNameEl && d.name) {
+        footerNameEl.textContent = d.name;
+      }
+
+      // Update Restaurant Name in Contact Section
+      // Note: .contact-info h2 is the section title "Book a Table", not the restaurant name
+      // We don't update it to avoid changing the section title
       
       // Update Address
       const addressSelectors = [
@@ -220,19 +229,37 @@ function subscribeToRestaurantSettings() {
         hoursSun.textContent = d.hoursSunday;
       }
       
-      // Update phone numbers
+      // Update phone numbers - both href AND text content
       const phoneLinks = document.querySelectorAll('[href^="tel:"]');
       phoneLinks.forEach(a => {
         if (d.phone) {
           a.setAttribute('href', `tel:${d.phone.replace(/\D/g, '')}`);
+          a.textContent = d.phone;
         }
       });
       
-      // Update email links
+      // Also update any elements with .pub-phone class (non-link phone display)
+      const phoneDisplays = document.querySelectorAll('.pub-phone');
+      phoneDisplays.forEach(el => {
+        if (d.phone) {
+          el.textContent = d.phone;
+        }
+      });
+
+      // Update email links - both href AND text content
       const emailLinks = document.querySelectorAll('[href^="mailto:"]');
       emailLinks.forEach(a => {
         if (d.email) {
           a.setAttribute('href', `mailto:${d.email}`);
+          a.textContent = d.email;
+        }
+      });
+
+      // Also update any elements with .pub-email class (non-link email display)
+      const emailDisplays = document.querySelectorAll('.pub-email');
+      emailDisplays.forEach(el => {
+        if (d.email) {
+          el.textContent = d.email;
         }
       });
       
@@ -250,12 +277,45 @@ function renderContactOptions(contacts) {
   if (menu == null) return;
   
   menu.innerHTML = '';
-  contacts.forEach(contact => {
+  if (!contacts || contacts.length === 0) {
+    // If no contacts, show a default WhatsApp option
     const item = document.createElement('a');
-    item.href = `https://wa.me/${contact.phone.replace(/\D/g, '')}`;
+    item.href = 'https://wa.me/';
     item.target = '_blank';
     item.className = 'contact-option';
-    item.innerHTML = `<i class="fab fa-whatsapp"></i> ${contact.name}`;
+    item.innerHTML = `<i class="fab fa-whatsapp"></i> Contact Us`;
+    menu.appendChild(item);
+    return;
+  }
+
+  contacts.forEach(contact => {
+    // Admin saves as type and value, we need to handle both formats
+    const displayName = contact.type || contact.name || 'Contact';
+    const contactValue = contact.value || contact.phone || '';
+    
+    let href = '#';
+    if (contact.type === 'WhatsApp' || contact.type === 'Whatsapp' || contact.type === 'whatsapp') {
+      // WhatsApp - use phone number
+      href = `https://wa.me/${contactValue.replace(/\D/g, '')}`;
+    } else if (contact.type === 'Email' || contact.type === 'email') {
+      // Email
+      href = `mailto:${contactValue}`;
+    } else if (contact.type === 'Phone' || contact.type === 'phone') {
+      // Regular phone
+      href = `tel:${contactValue.replace(/\D/g, '')}`;
+    } else if (contact.type === 'Link' || contact.type === 'link') {
+      // Generic link
+      href = contactValue.startsWith('http') ? contactValue : `https://${contactValue}`;
+    } else {
+      // Default to WhatsApp format for unknown types
+      href = `https://wa.me/${contactValue.replace(/\D/g, '')}`;
+    }
+    
+    const item = document.createElement('a');
+    item.href = href;
+    item.target = '_blank';
+    item.className = 'contact-option';
+    item.innerHTML = `<i class="fab fa-whatsapp"></i> ${displayName}`;
     menu.appendChild(item);
   });
 }
@@ -272,3 +332,4 @@ if (document.getElementById('eventsGrid')) {
 
 // Initialize settings
 subscribeToRestaurantSettings();
+

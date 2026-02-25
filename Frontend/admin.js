@@ -532,12 +532,14 @@ async function loadSettings() {
 
       // Load contacts
       renderContactsList(data.contacts || []);
-    }
-  } catch (err) {
+    } else {
+      console.log('No settings found, using defaults');
+    }}catch (err) {
     console.error('Error loading settings:', err);
-  }
-}
+    alert('Failed to load settings. Check console for details.');
+  }}
 
+    
 // Handle settings form submission
 async function handleSettingsSubmit(e) {
   e.preventDefault();
