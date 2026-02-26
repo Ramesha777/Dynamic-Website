@@ -284,8 +284,14 @@ function renderContactOptions(contacts) {
     const item = document.createElement('a');
     item.href = 'https://wa.me/';
     item.target = '_blank';
-    item.className = 'contact-option';
-    item.innerHTML = `<i class="fab fa-whatsapp"></i> Contact Us`;
+    item.className = 'whatsapp-option';
+    item.innerHTML = `
+      <div class="option-icon"><i class="fab fa-whatsapp"></i></div>
+      <div>
+        <strong>Contact Us</strong>
+        <p>via WhatsApp</p>
+      </div>
+    `;
     menu.appendChild(item);
     return;
   }
@@ -294,30 +300,45 @@ function renderContactOptions(contacts) {
     // Admin saves as type and value, we need to handle both formats
     const displayName = contact.type || contact.name || 'Contact';
     const contactValue = contact.value || contact.phone || '';
+    const purpose = contact.purpose || '';
     
     let href = '#';
+    let iconClass = 'fab fa-whatsapp'; // Default icon
+
     if (contact.type === 'WhatsApp' || contact.type === 'Whatsapp' || contact.type === 'whatsapp') {
       // WhatsApp - use phone number
       href = `https://wa.me/${contactValue.replace(/\D/g, '')}`;
+      iconClass = 'fab fa-whatsapp';
     } else if (contact.type === 'Email' || contact.type === 'email') {
       // Email
       href = `mailto:${contactValue}`;
+      iconClass = 'fas fa-envelope';
     } else if (contact.type === 'Phone' || contact.type === 'phone') {
       // Regular phone
       href = `tel:${contactValue.replace(/\D/g, '')}`;
+      iconClass = 'fas fa-phone';
     } else if (contact.type === 'Link' || contact.type === 'link') {
       // Generic link
       href = contactValue.startsWith('http') ? contactValue : `https://${contactValue}`;
+      iconClass = 'fas fa-link';
     } else {
       // Default to WhatsApp format for unknown types
       href = `https://wa.me/${contactValue.replace(/\D/g, '')}`;
+      iconClass = 'fab fa-whatsapp';
     }
     
     const item = document.createElement('a');
     item.href = href;
     item.target = '_blank';
-    item.className = 'contact-option';
-    item.innerHTML = `<i class="fab fa-whatsapp"></i> ${displayName}`;
+    item.className = 'whatsapp-option';
+    item.innerHTML = `
+      <div class="option-icon"><i class="${iconClass}"></i></div>
+      <div>
+        <strong>${escapeHtml(displayName)}</strong>
+        ${purpose ? `<div style="font-size: 0.85rem; color: #e8650a; margin-bottom: 2px;">${escapeHtml(purpose)}</div>` : ''}
+        <p>${escapeHtml(contactValue)}</p>
+      </div>
+    `;
     menu.appendChild(item);
   });
 }

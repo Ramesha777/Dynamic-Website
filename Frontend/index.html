@@ -6,6 +6,7 @@
 <title>Whitmore Reans Bars & Restaurant</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <style>
   .loader-container {
@@ -146,73 +147,63 @@
   <div class="gallery-carousel">
     <div class="gallery-track">
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop" alt="The Main Dining Room" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">D</div>
           <span>The Main Dining Room</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=1974&auto=format&fit=crop" alt="The Kitchen" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">K</div>
           <span>The Kitchen</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://i.pinimg.com/originals/53/e0/0f/53e00faa28e629d4faef0008e0d5b599.jpg" alt="Garden Terrace" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">G</div>
           <span>Garden Terrace</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop" alt="The Bar Lounge" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">B</div>
           <span>The Bar Lounge</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?q=80&w=1970&auto=format&fit=crop" alt="Private Dining" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">P</div>
           <span>Private Dining</span>
         </div>
       </div>
       <!-- Duplicate slides for seamless infinite scroll -->
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop" alt="The Main Dining Room" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">D</div>
           <span>The Main Dining Room</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?q=80&w=1974&auto=format&fit=crop" alt="The Kitchen" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">K</div>
           <span>The Kitchen</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://i.pinimg.com/originals/53/e0/0f/53e00faa28e629d4faef0008e0d5b599.jpg" alt="Garden Terrace" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">G</div>
           <span>Garden Terrace</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop" alt="The Bar Lounge" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">B</div>
           <span>The Bar Lounge</span>
         </div>
       </div>
       <div class="gallery-slide">
-        <div class="gallery-slide-bg"></div>
+        <img src="https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?q=80&w=1970&auto=format&fit=crop" alt="Private Dining" class="gallery-slide-img">
         <div class="gallery-slide-content">
-          <div class="gallery-icon">P</div>
           <span>Private Dining</span>
         </div>
       </div>
@@ -444,7 +435,7 @@
         const docRef = await addDoc(collection(db, 'reservations'), reservationData);
         
         // Show success message with booking ID
-        alert(`✅ Reservation Confirmed!\n\nYour Booking ID: ${bookingCode}\n\nPlease save this ID to check your reservation status.\n\nA confirmation has been sent to ${email}`);
+        alert(`✅ Reservation Confirmed!\n\nYour Booking ID: ${bookingCode}\n\nPlease save this ID to check your reservation status.\n\nA confirmation message will be sent to you shortly.`);
         
         // Reset form
         reservationForm.reset();

@@ -2,7 +2,7 @@
 import { firebaseConfig } from '../Backend/firebaseconfig.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Initialize Firebase (modular)
@@ -29,7 +29,6 @@ onAuthStateChanged(auth, (user) => {
     loadAllReservations();
     loadEvents();
     loadSettings();
-    loadUsers();
     
     // Wire settings form after user is authenticated
     setTimeout(() => {
@@ -40,9 +39,6 @@ onAuthStateChanged(auth, (user) => {
       }
       const addEventBtn = document.getElementById('addEventBtn');
       if (addEventBtn) addEventBtn.addEventListener('click', (e) => { e.preventDefault(); showEventModal(); });
-      
-      const addUserBtn = document.getElementById('addUserBtn');
-      if (addUserBtn) addUserBtn.addEventListener('click', (e) => { e.preventDefault(); showUserModal(); });
     }, 200);
   } else {
     // User is not logged in
@@ -609,8 +605,9 @@ function renderContactsList(contacts) {
     div.style.gap = '8px';
     div.style.marginBottom = '6px';
     div.innerHTML = `
-      <input type="text" class="contact-type" value="${escapeHtml(contact.type)}" placeholder="Type (e.g. WhatsApp)" style="width:100px;" />
-      <input type="text" class="contact-value" value="${escapeHtml(contact.value)}" placeholder="Number or Link" style="width:180px;" />
+      <input type="text" class="contact-type" value="${escapeHtml(contact.type)}" placeholder="Type" style="width:90px;" />
+      <input type="text" class="contact-purpose" value="${escapeHtml(contact.purpose || '')}" placeholder="Purpose (e.g. Bookings)" style="width:130px;" />
+      <input type="text" class="contact-value" value="${escapeHtml(contact.value)}" placeholder="Number or Link" style="width:160px;" />
       <button type="button" class="edit-contact-btn">Edit</button>
       <button type="button" class="remove-contact-btn">Remove</button>
     `;
@@ -625,8 +622,9 @@ function getContactsFromUI() {
   const contacts = [];
   items.forEach(item => {
     const type = item.querySelector('.contact-type').value.trim();
+    const purpose = item.querySelector('.contact-purpose').value.trim();
     const value = item.querySelector('.contact-value').value.trim();
-    if (type && value) contacts.push({ type, value });
+    if (type && value) contacts.push({ type, purpose, value });
   });
   return contacts;
 }
@@ -642,8 +640,9 @@ document.addEventListener('click', (e) => {
     div.style.gap = '8px';
     div.style.marginBottom = '6px';
     div.innerHTML = `
-      <input type="text" class="contact-type" value="" placeholder="e.g. WhatsApp, Email" style="width:100px;" />
-      <input type="text" class="contact-value" value="" placeholder="Number or email address" style="width:180px;" />
+      <input type="text" class="contact-type" value="" placeholder="Type" style="width:90px;" />
+      <input type="text" class="contact-purpose" value="" placeholder="Purpose" style="width:130px;" />
+      <input type="text" class="contact-value" value="" placeholder="Number/Link" style="width:160px;" />
       <button type="button" class="edit-contact-btn">Edit</button>
       <button type="button" class="remove-contact-btn">Remove</button>
     `;
@@ -659,169 +658,3 @@ document.addEventListener('click', (e) => {
     item.querySelector('.contact-type').focus();
   }
 });
-
-// Load all admin users from Firestore
-async function loadUsers() {
-  try {
-    const q = query(collection(db, 'adminUsers'), orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const tbody = document.getElementById('usersBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    // Add event listener for delete buttons
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const id = docSnap.id;
-
-      const row = document.createElement('tr');
-      row.setAttribute('data-id', id);
-
-      const nameCell = document.createElement('td');
-      nameCell.textContent = data.name || '';
-      row.appendChild(nameCell);
-
-      const emailCell = document.createElement('td');
-      emailCell.textContent = data.email || '';
-      row.appendChild(emailCell);
-
-      const dateCell = document.createElement('td');
-      const createdAt = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'N/A';
-      dateCell.textContent = createdAt;
-      row.appendChild(dateCell);
-
-      const actionCell = document.createElement('td');
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'action-btn';
-      deleteBtn.style.background = '#d9534f';
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.setAttribute('data-user-id', id);
-      deleteBtn.setAttribute('data-user-email', data.email);
-      actionCell.appendChild(deleteBtn);
-      row.appendChild(actionCell);
-
-      tbody.appendChild(row);
-    });
-
-    // Event delegation for delete buttons
-    tbody.addEventListener('click', (e) => {
-      const deleteBtn = e.target.closest('button[data-user-id]');
-      if (deleteBtn) {
-        const userId = deleteBtn.getAttribute('data-user-id');
-        const userEmail = deleteBtn.getAttribute('data-user-email');
-        if (confirm(`Are you sure you want to delete user: ${userEmail}?`)) {
-          deleteAdminUser(userId, userEmail);
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Error loading users:', error);
-  }
-}
-
-// Show modal to create new user
-function showUserModal() {
-  let modal = document.getElementById('userModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'userModal';
-    modal.style.position = 'fixed';
-    modal.style.left = '0';
-    modal.style.top = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.background = 'rgba(0,0,0,0.5)';
-    modal.style.zIndex = '9999';
-    modal.innerHTML = `
-      <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
-        <h3 style="margin-top:0">Create New User</h3>
-        <div style="margin:8px 0"><label>Name</label><input id="userName" type="text" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Email</label><input id="userEmail" type="email" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Password</label><input id="userPassword" type="password" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Confirm Password</label><input id="userPasswordConfirm" type="password" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="text-align:right;margin-top:12px;">
-          <button id="userCancel" style="margin-right:8px;padding:8px 15px;background:#ccc;border:none;border-radius:4px;cursor:pointer;">Cancel</button>
-          <button id="userSave" style="padding:8px 15px;background:#c9a962;color:#fff;border:none;border-radius:4px;cursor:pointer;">Create User</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector('#userCancel').addEventListener('click', () => modal.remove());
-  }
-
-  const saveBtn = modal.querySelector('#userSave');
-  const onSave = async () => {
-    const name = modal.querySelector('#userName').value.trim();
-    const email = modal.querySelector('#userEmail').value.trim();
-    const password = modal.querySelector('#userPassword').value;
-    const passwordConfirm = modal.querySelector('#userPasswordConfirm').value;
-
-    if (!name || !email || !password) {
-      alert('Please fill in all fields');
-      return;
-    }
-
-    if (password !== passwordConfirm) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters');
-      return;
-    }
-
-    try {
-      // Create user in Firebase Auth
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Store user info in Firestore
-      await setDoc(doc(db, 'adminUsers', userCred.user.uid), {
-        name,
-        email,
-        createdAt: new Date(),
-        uid: userCred.user.uid
-      });
-
-      alert('User created successfully!');
-      modal.remove();
-      saveBtn.removeEventListener('click', onSave);
-      loadUsers();
-    } catch (err) {
-      console.error('Error creating user:', err);
-      alert('Error: ' + err.message);
-    }
-  };
-  saveBtn.addEventListener('click', onSave);
-}
-
-// Delete admin user
-async function deleteAdminUser(userId, userEmail) {
-  try {
-    // Get current user
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      alert('You must be logged in');
-      return;
-    }
-
-    // Cannot delete self
-    if (currentUser.email === userEmail) {
-      alert('You cannot delete your own account');
-      return;
-    }
-
-    // Delete from Firestore
-    await deleteDoc(doc(db, 'adminUsers', userId));
-
-    console.log('User deleted from Firestore:', userEmail);
-    alert('User deleted successfully!');
-    loadUsers();
-  } catch (err) {
-    console.error('Error deleting user:', err);
-    alert('Failed to delete user: ' + err.message);
-  }
-}

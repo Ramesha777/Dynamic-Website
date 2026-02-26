@@ -603,31 +603,22 @@ section { padding: 7rem 4rem; }
   transform: scale(1.02);
 }
 
-.gallery-slide-bg {
+.gallery-slide-img {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.4s;
 }
 
-.gallery-slide:nth-child(1) .gallery-slide-bg,
-.gallery-slide:nth-child(6) .gallery-slide-bg { background: linear-gradient(135deg, #1a0f05, #2d1a08); }
-.gallery-slide:nth-child(2) .gallery-slide-bg,
-.gallery-slide:nth-child(7) .gallery-slide-bg { background: linear-gradient(135deg, #0d1a0d, #1a2d1a); }
-.gallery-slide:nth-child(3) .gallery-slide-bg,
-.gallery-slide:nth-child(8) .gallery-slide-bg { background: linear-gradient(135deg, #1a1a05, #2d2d08); }
-.gallery-slide:nth-child(4) .gallery-slide-bg,
-.gallery-slide:nth-child(9) .gallery-slide-bg { background: linear-gradient(135deg, #1a0d14, #2d1421); }
-.gallery-slide:nth-child(5) .gallery-slide-bg,
-.gallery-slide:nth-child(10) .gallery-slide-bg { background: linear-gradient(135deg, #0d131a, #1a2030); }
-
-.gallery-slide:hover .gallery-slide-bg {
+.gallery-slide:hover .gallery-slide-img {
   transform: scale(1.08);
 }
 
 .gallery-slide-content {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(232,101,10,0.85));
+  inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(10, 10, 10, 0.9));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -641,16 +632,6 @@ section { padding: 7rem 4rem; }
   font-size: 1.1rem;
   font-weight: 700;
   color: #fff;
-}
-
-.gallery-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: clamp(3rem, 6vw, 6rem);
-  opacity: 0.2;
-  color: var(--cream);
 }
 
 /* Gallery Dots */
