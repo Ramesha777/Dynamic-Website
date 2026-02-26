@@ -217,6 +217,21 @@ async function loadAllReservations() {
       guestsCell.textContent = data.guests || '';
       row.appendChild(guestsCell);
 
+      // Special Requests
+      const specialRequestsCell = document.createElement('td');
+      specialRequestsCell.textContent = data.specialRequests || '-';
+      row.appendChild(specialRequestsCell);
+
+      // Created (timestamp)
+      const createdCell = document.createElement('td');
+      if (data.timestamp) {
+        const createdDate = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+        createdCell.textContent = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        createdCell.textContent = '-';
+      }
+      row.appendChild(createdCell);
+
       // Status
       const statusCell = document.createElement('td');
       const statusSpan = document.createElement('span');
@@ -425,7 +440,7 @@ document.addEventListener('click', async (e) => {
 function escapeHtml(s) {
   if (!s) return '';
   return s.toString().replace(/[&<>"'`]/g, function (c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '`': '&#96;'}[c];
+    return {'&':'&amp;','<':'<','>':'>','"':'"',"'":'&#39;', '`': '&#96;'}[c];
   });
 }
 

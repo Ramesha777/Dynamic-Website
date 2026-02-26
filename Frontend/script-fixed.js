@@ -40,7 +40,7 @@ function escapeHtml(s) {
 }
 
 // Filter menu by category
-function filterMenu(category) {
+function filterMenu(event, category) {
   document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.menu-tab[data-category="${category}"]`);
   if (activeTab) activeTab.classList.add('active');
@@ -265,7 +265,7 @@ function renderContactOptions(contacts) {
 
 // Initialize menu if on menu page
 if (document.getElementById('menuGrid')) {
-  filterMenu('starters');
+  filterMenu(null, 'starters');
 }
 
 // Initialize events if on events page  

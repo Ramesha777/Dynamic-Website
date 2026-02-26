@@ -99,10 +99,10 @@
   <div class="section-label">What We Serve</div>
   <h2 class="section-title">Our <em>Menu</em></h2>
   <div class="menu-tabs">
-    <button class="menu-tab active" onclick="filterMenu(event,'starters')">Starters</button>
-    <button class="menu-tab" onclick="filterMenu(event,'mains')">Mains</button>
-    <button class="menu-tab" onclick="filterMenu(event,'grills')">Grills</button>
-    <button class="menu-tab" onclick="filterMenu(event,'desserts')">Desserts</button>
+    <button class="menu-tab active" data-category="starters" onclick="filterMenu(event,'starters')">Starters</button>
+    <button class="menu-tab" data-category="mains" onclick="filterMenu(event,'mains')">Mains</button>
+    <button class="menu-tab" data-category="grills" onclick="filterMenu(event,'grills')">Grills</button>
+    <button class="menu-tab" data-category="desserts" onclick="filterMenu(event,'desserts')">Desserts</button>
   </div>
   <div class="menu-grid" id="menuGrid">
     <!-- Filled by JS -->
@@ -143,32 +143,87 @@
 <section id="gallery">
   <div class="section-label">Our Space</div>
   <h2 class="section-title">See the <em>Experience</em></h2>
-  <div class="gallery-grid">
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>The Main Dining Room</span></div>
-      <div class="gallery-icon">D</div>
+  <div class="gallery-carousel">
+    <div class="gallery-track">
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">D</div>
+          <span>The Main Dining Room</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">K</div>
+          <span>The Kitchen</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">G</div>
+          <span>Garden Terrace</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">B</div>
+          <span>The Bar Lounge</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">P</div>
+          <span>Private Dining</span>
+        </div>
+      </div>
+      <!-- Duplicate slides for seamless infinite scroll -->
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">D</div>
+          <span>The Main Dining Room</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">K</div>
+          <span>The Kitchen</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">G</div>
+          <span>Garden Terrace</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">B</div>
+          <span>The Bar Lounge</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <div class="gallery-slide-bg"></div>
+        <div class="gallery-slide-content">
+          <div class="gallery-icon">P</div>
+          <span>Private Dining</span>
+        </div>
+      </div>
     </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>The Kitchen</span></div>
-      <div class="gallery-icon">K</div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>Garden Terrace</span></div>
-      <div class="gallery-icon">G</div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>The Bar Lounge</span></div>
-      <div class="gallery-icon">B</div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>Private Dining</span></div>
-      <div class="gallery-icon">P</div>
-    </div>
+  </div>
+  <div class="gallery-dots">
+    <span class="gallery-dot active"></span>
+    <span class="gallery-dot"></span>
+    <span class="gallery-dot"></span>
+    <span class="gallery-dot"></span>
+    <span class="gallery-dot"></span>
   </div>
 </section>
 
@@ -310,7 +365,7 @@
     <li><a href="#events">Events</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
-  <p class="footer-copy">2025 Whitmore Reans Bars & Restaurant - <span class="pub-address">Wolverhampton, WV6 0QN</span></p>
+  <p class="footer-copy">2025 <span class="footer-restaurant-name">Whitmore Reans Bars & Restaurant</span> - <span class="pub-address">Wolverhampton, WV6 0QN</span></p>
 </footer>
 
 <!-- Firebase SDK -->
@@ -339,10 +394,71 @@
   // Load script.js as regular script after Firebase is initialized
   setTimeout(() => {
     const script = document.createElement('script');
-    script.src = 'script-fixed.js';
+    script.src = 'script.js';
     script.onerror = () => console.error('Failed to load script.js');
     document.head.appendChild(script);
   }, 100);
+
+  // Reservation form handler
+  const reservationForm = document.getElementById('reservationForm');
+  if (reservationForm) {
+    reservationForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = reservationForm.querySelector('.submit-btn');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.textContent = 'Processing...';
+      submitBtn.disabled = true;
+
+      try {
+        // Get form values
+        const firstName = document.getElementById('resName').value.trim();
+        const lastName = document.getElementById('resLastName').value.trim();
+        const email = document.getElementById('resEmail').value.trim();
+        const phone = document.getElementById('resPhone').value.trim();
+        const date = document.getElementById('resDate').value;
+        const time = document.getElementById('resTime').value;
+        const guests = document.getElementById('resGuests').value;
+        const specialRequests = reservationForm.querySelector('textarea')?.value.trim() || '';
+        
+        // Generate unique 4-digit booking code
+        const bookingCode = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        // Prepare reservation data
+        const reservationData = {
+          firstName,
+          lastName,
+          name: `${firstName} ${lastName}`.trim(),
+          email,
+          phone,
+          date,
+          time,
+          guests,
+          specialRequests,
+          code: bookingCode,
+          status: 'Pending',
+          timestamp: new Date()
+        };
+        
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, 'reservations'), reservationData);
+        
+        // Show success message with booking ID
+        alert(`✅ Reservation Confirmed!\n\nYour Booking ID: ${bookingCode}\n\nPlease save this ID to check your reservation status.\n\nA confirmation has been sent to ${email}`);
+        
+        // Reset form
+        reservationForm.reset();
+        
+        console.log('Reservation saved with ID:', docRef.id, 'Code:', bookingCode);
+      } catch (error) {
+        console.error('Error saving reservation:', error);
+        alert('Failed to submit reservation. Please try again or call us directly.');
+      } finally {
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+      }
+    });
+  }
 </script>
 </body>
 </html>

@@ -40,7 +40,7 @@ function escapeHtml(s) {
 }
 
 // Filter menu by category
-function filterMenu(category) {
+function filterMenu(event, category) {
   document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.menu-tab[data-category="${category}"]`);
   if (activeTab) activeTab.classList.add('active');
@@ -188,22 +188,24 @@ function subscribeToRestaurantSettings() {
       if (navLogoEl && d.name) {
         navLogoEl.innerHTML = `${d.name}<br><span>Bars & Restaurant</span>`;
       }
-      // Update Restaurant Name in Footer
-      const footerNameEl = document.querySelector('.footer-copy span');
-      if (footerNameEl && d.name) {
-        footerNameEl.textContent = d.name;
+      // Update Restaurant Name in Footer Logo
+      const footerLogoEl = document.querySelector('.footer-logo');
+      if (footerLogoEl && d.name) {
+        footerLogoEl.innerHTML = `${d.name} <span>Bars & Restaurant</span>`;
       }
 
-      // Update Restaurant Name in Contact Section
-      // Note: .contact-info h2 is the section title "Book a Table", not the restaurant name
-      // We don't update it to avoid changing the section title
+      // Update Restaurant Name in Footer Copyright
+      const footerCopyNameEl = document.querySelector('.footer-restaurant-name');
+      if (footerCopyNameEl && d.name) {
+        footerCopyNameEl.textContent = `${d.name} Bars & Restaurant`;
+      }
       
       // Update Address
       const addressSelectors = [
         '.contact-info p.pub-address',
         '.hours-strip span.pub-address',
         '.map-info strong.pub-address',
-        '.footer-copy span'
+        '.footer-copy .pub-address'
       ];
       
       addressSelectors.forEach(sel => {
@@ -322,7 +324,7 @@ function renderContactOptions(contacts) {
 
 // Initialize menu if on menu page
 if (document.getElementById('menuGrid')) {
-  filterMenu('starters');
+  filterMenu(null, 'starters');
 }
 
 // Initialize events if on events page  
@@ -332,4 +334,3 @@ if (document.getElementById('eventsGrid')) {
 
 // Initialize settings
 subscribeToRestaurantSettings();
-

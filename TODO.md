@@ -1,58 +1,22 @@
-# Firebase Authentication Implementation - COMPLETED
+# TODO: Fix Reservation System
 
-## Summary of Changes Made
+## Task
+Fix when customer reserve a table it does not show a booking ID for customer to check and allow admin to view all details of booking
 
-### Fixed Issues:
-1. **Frontend/index.html** - Updated to include:
-   - Added form ID: `id="reservationForm"` to the reservation form
-   - Added proper IDs to all form fields:
-     - `resName` - First Name input
-     - `resLastName` - Last Name input  
-     - `resEmail` - Email input
-     - `resPhone` - Phone input
-     - `resDate` - Date input
-     - `resTime` - Time select
-     - `resGuests` - Guests select
-   - Added Firebase SDK integration before script.js
-   - Firebase Firestore is now properly initialized and exported to window for script.js usage
+## Plan
 
-### Existing Implementation (Already Working):
-- **Frontend/login.html** - Firebase Authentication with:
-  - Email/password login
-  - Error handling with user-friendly messages
-  - Session storage for auth state
-  - Redirect to admin after login
-  
-- **Frontend/admin.html** - Protected admin dashboard with:
-  - Authentication check using onAuthStateChanged
-  - Loading screen while checking auth
-  - "Access Denied" screen for unauthenticated users
-  - Dashboard with reservation data from Firestore
-  - Logout functionality
+### 1. Frontend/index.html
+- [x] Add reservation form submission handler
+- [x] Generate unique booking ID (code)
+- [x] Save reservation to Firestore with booking code
+- [x] Show success message with booking ID to customer
 
-- **Frontend/script.js** - Reservation form handler:
-  - saveReservation() function that saves to Firestore
-  - Event listener for form submission
-  - Generates unique reservation code
+### 2. Frontend/admin.html
+- [x] Add "Special Requests" column to reservations table
+- [x] Add "Created At" column to show when reservation was made
 
-## Files Structure:
-```
-d:/restuarant websites/
-├── Backend/
-│   └── firebaseconfig.js (Firebase config)
-├── Frontend/
-│   ├── index.html (Main site with reservation form + Firebase)
-│   ├── login.html (Firebase Auth login)
-│   ├── admin.html (Protected admin dashboard)
-│   ├── script.js (Menu + reservation handling)
-│   ├── firebase.js (Firebase exports)
-│   └── *.css (Styling files)
-```
+### 3. Frontend/admin.js
+- [x] Populate "Special Requests" column with data
+- [x] Populate "Created" column with timestamp
 
-## Testing Notes:
-To test the complete flow:
-1. Open login.html and login with Firebase credentials
-2. Should redirect to admin.html after successful login
-3. Admin page should show dashboard with reservations
-4. Logout button should return to login page
-5. Main index.html reservation form should save to Firestore
+## Status: Completed ✅
