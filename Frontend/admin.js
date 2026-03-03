@@ -351,6 +351,7 @@ async function loadEvents() {
           <td>${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" alt="img" style="height:40px;object-fit:cover;border-radius:4px;"/>` : ''}</td>
           <td>${escapeHtml((data.description || '').substring(0, 120))}</td>
           <td style="white-space:nowrap">
+            <button class="action-btn edit-event" data-id="${id}" data-title="${escapeHtml(data.title || '')}" data-start="${escapeHtml(data.startDate || '')}" data-end="${escapeHtml(data.endDate || '')}" data-image="${escapeHtml(data.imageUrl || '')}" data-desc="${escapeHtml(data.description || '')}">Edit</button>
             <button class="action-btn delete-event" data-id="${id}">Delete</button>
           </td>
         `;
@@ -361,57 +362,81 @@ async function loadEvents() {
   }
 }
 
-// Show modal to create a new event
-function showEventModal() {
-  let modal = document.getElementById('eventModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'eventModal';
-    modal.style.position = 'fixed';
-    modal.style.left = '0';
-    modal.style.top = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.background = 'rgba(0,0,0,0.5)';
-    modal.innerHTML = `
-      <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
-        <h3 style="margin-top:0">Create Event</h3>
-        <div style="margin:8px 0"><label>Title</label><input id="eventTitle" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="display:flex;gap:8px;">
-          <div style="flex:1;margin:8px 0"><label>Start Date</label><input id="eventStart" type="date" style="width:100%;padding:8px;margin-top:6px;"/></div>
-          <div style="flex:1;margin:8px 0"><label>End Date</label><input id="eventEnd" type="date" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        </div>
-        <div style="margin:8px 0"><label>Photo URL</label><input id="eventImage" placeholder="https://.../photo.jpg" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Description</label><textarea id="eventDesc" style="width:100%;padding:8px;margin-top:6px;" rows="4"></textarea></div>
-        <div style="text-align:right;margin-top:12px;">
-          <button id="eventCancel" style="margin-right:8px;">Cancel</button>
-          <button id="eventSave">Save</button>
-        </div>
+// Show modal to create or edit an event
+function showEventModal(eventData = null) {
+  // Remove existing modal if any
+  const existingModal = document.getElementById('eventModal');
+  if (existingModal) existingModal.remove();
+
+  const isEdit = eventData && eventData.id;
+  const modal = document.createElement('div');
+  modal.id = 'eventModal';
+  modal.style.position = 'fixed';
+  modal.style.left = '0';
+  modal.style.top = '0';
+  modal.style.width = '100%';
+  modal.style.height = '100%';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.background = 'rgba(0,0,0,0.5)';
+  modal.innerHTML = `
+    <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
+      <h3 style="margin-top:0">${isEdit ? 'Edit Event' : 'Create Event'}</h3>
+      <div style="margin:8px 0"><label>Title</label><input id="eventTitle" style="width:100%;padding:8px;margin-top:6px;" value="${escapeHtml(eventData?.title || '')}"/></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;margin:8px 0"><label>Start Date</label><input id="eventStart" type="date" style="width:100%;padding:8px;margin-top:6px;" value="${eventData?.startDate || ''}"/></div>
+        <div style="flex:1;margin:8px 0"><label>End Date</label><input id="eventEnd" type="date" style="width:100%;padding:8px;margin-top:6px;" value="${eventData?.endDate || ''}"/></div>
       </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector('#eventCancel').addEventListener('click', () => modal.remove());
-  }
+      <div style="margin:8px 0"><label>Photo URL</label><input id="eventImage" placeholder="https://.../photo.jpg" style="width:100%;padding:8px;margin-top:6px;" value="${escapeHtml(eventData?.imageUrl || '')}"/></div>
+      <div style="margin:8px 0"><label>Description</label><textarea id="eventDesc" style="width:100%;padding:8px;margin-top:6px;" rows="4">${escapeHtml(eventData?.description || '')}</textarea></div>
+      <div style="text-align:right;margin-top:12px;">
+        <button id="eventCancel" style="margin-right:8px;">Cancel</button>
+        <button id="eventSave">${isEdit ? 'Update' : 'Save'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  modal.querySelector('#eventCancel').addEventListener('click', () => modal.remove());
 
   const saveBtn = modal.querySelector('#eventSave');
   const onSave = async () => {
-      const title = modal.querySelector('#eventTitle').value.trim();
-      const startDate = modal.querySelector('#eventStart').value;
-      const endDate = modal.querySelector('#eventEnd').value;
-      const imageUrl = modal.querySelector('#eventImage').value.trim();
-      const desc = modal.querySelector('#eventDesc').value.trim();
+    const title = modal.querySelector('#eventTitle').value.trim();
+    const startDate = modal.querySelector('#eventStart').value;
+    const endDate = modal.querySelector('#eventEnd').value;
+    const imageUrl = modal.querySelector('#eventImage').value.trim();
+    const desc = modal.querySelector('#eventDesc').value.trim();
+    
     if (!title) return alert('Title required');
+    
     try {
-        await addDoc(collection(db, 'events'), { title, startDate, endDate, imageUrl, description: desc, timestamp: new Date() });
+      if (isEdit) {
+        // Update existing event
+        await updateDoc(doc(db, 'events', eventData.id), { 
+          title, 
+          startDate, 
+          endDate, 
+          imageUrl, 
+          description: desc 
+        });
+      } else {
+        // Create new event
+        await addDoc(collection(db, 'events'), { 
+          title, 
+          startDate, 
+          endDate, 
+          imageUrl, 
+          description: desc, 
+          timestamp: new Date() 
+        });
+      }
       modal.remove();
       saveBtn.removeEventListener('click', onSave);
       loadEvents();
     } catch (err) {
-      console.error('Error creating event:', err);
-      alert('Failed to create event');
+      console.error('Error saving event:', err);
+      alert('Failed to save event');
     }
   };
   saveBtn.addEventListener('click', onSave);
@@ -430,6 +455,21 @@ document.addEventListener('click', async (e) => {
     console.error('Error deleting event:', err);
     alert('Failed to delete event');
   }
+});
+
+// Delegated edit handler for events
+document.addEventListener('click', (e) => {
+  const editBtn = e.target.closest('.edit-event');
+  if (!editBtn) return;
+  
+  const id = editBtn.getAttribute('data-id');
+  const title = editBtn.getAttribute('data-title');
+  const startDate = editBtn.getAttribute('data-start');
+  const endDate = editBtn.getAttribute('data-end');
+  const imageUrl = editBtn.getAttribute('data-image');
+  const description = editBtn.getAttribute('data-desc');
+  
+  showEventModal({ id, title, startDate, endDate, imageUrl, description });
 });
 
 // Utility: simple HTML escape
@@ -543,6 +583,31 @@ async function loadSettings() {
 
       // Load contacts
       renderContactsList(data.contacts || []);
+
+      // Load and display domain expiry
+      const expiryDate = data.domainExpiryDate;
+      const daysLeftEl = document.getElementById('domainDaysLeft');
+      if (daysLeftEl) { // Always check if element exists
+        if (expiryDate) {
+          // setting feb23 2027 as expiry
+          const Expiry = '2027-02-23';
+          document.getElementById('settingDomainExpiry').value = expiryDate;
+          const today = new Date(); // Mock today's date for testing (March 23, 2027)
+          today.setHours(0, 0, 0, 0); // Normalize today's date
+          const expiry = new Date(expiryDate); // Normalize expiry date
+          expiry.setHours(0, 0, 0, 0);// Calculate days left
+          const diffTime = expiry - today;// Calculate days left
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));// Display days left with color coding
+
+          if (diffDays <= 0) {
+            daysLeftEl.textContent = 'Expired';
+            daysLeftEl.style.color = '#d9534f';
+          } else {
+            daysLeftEl.textContent = `${diffDays} days left`;
+            daysLeftEl.style.color = diffDays < 60 ? '#f0ad4e' : 'inherit';
+          }
+        }
+      }
     } else {
       console.log('No settings found, using defaults');
     }}catch (err) {
@@ -563,6 +628,7 @@ async function handleSettingsSubmit(e) {
     const hoursMondayThursday = document.getElementById('settingHoursMondayThursday').value.trim();
     const hoursFridaySaturday = document.getElementById('settingHoursFridaySaturday').value.trim();
     const hoursSunday = document.getElementById('settingHoursSunday').value.trim();
+    const domainExpiryDate = document.getElementById('settingDomainExpiry').value;
 
     if (!name || !email || !phone || !address || !hoursMondayThursday || !hoursFridaySaturday || !hoursSunday) {
       alert('Please fill in all settings fields.');
@@ -581,10 +647,34 @@ async function handleSettingsSubmit(e) {
       hoursFridaySaturday,
       hoursSunday,
       contacts,
+      domainExpiryDate,
       timestamp: new Date()
     }, { merge: true });
 
     alert('Settings saved successfully!');
+
+    // Clear the form fields after saving
+    document.getElementById('settingName').value = '';
+    document.getElementById('settingEmail').value = '';
+    document.getElementById('settingPhone').value = '';
+    document.getElementById('settingAddress').value = '';
+    document.getElementById('settingHoursMondayThursday').value = '';
+    document.getElementById('settingHoursFridaySaturday').value = '';
+    document.getElementById('settingHoursSunday').value = '';
+    document.getElementById('settingDomainExpiry').value = '';
+    
+    // Clear contacts list
+    const contactsList = document.getElementById('contactsList');
+    if (contactsList) {
+      contactsList.innerHTML = '';
+    }
+
+    // Also update the dashboard widget immediately
+    const daysLeftEl = document.getElementById('domainDaysLeft');
+    if (daysLeftEl) {
+      daysLeftEl.textContent = '--';
+      daysLeftEl.style.color = 'inherit';
+    }
   } catch (err) {
     console.error('Error saving settings:', err);
     alert('Failed to save settings. Check console for details.');

@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard – Whitmore Reans</title>
+<!-- logo from images/logo.png-->
+ <link rel="icon" href="images/logo.jpeg" type="image/jpeg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="admin.css">
 </head>
@@ -57,6 +59,13 @@
           <div class="stat-info">
             <h3>Average Rating</h3>
             <p class="stat-number">4.8</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌐</div>
+          <div class="stat-info">
+            <h3>Domain Expiry</h3>
+            <p class="stat-number" id="domainDaysLeft">--</p>
           </div>
         </div>
       </div>
@@ -117,10 +126,20 @@
       <div class="page-header">
         <h1>Events</h1>
         <p>Create, edit and remove events shown on the public site</p>
+        <p> Add your photo to this from the Button below and Get the URL</p>
+        
       </div>
       <div class="admin-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <button id="addEventBtn" class="btn-primary">Add Event</button>
+          <button onclick="window.open('https://postimages.org/', '_blank')">
+  Upload photo
+</button>
+
+          <!--photo upload button-->
+          <div>
+           
+</div>
         </div>
         <table class="admin-table">
           <thead>
@@ -182,8 +201,21 @@
             <div id="contactsList"></div>
             <button type="button" id="addContactBtn" class="btn-secondary" style="margin-top:8px;">Add Contact</button>
           </div>
+          <div class="form-group">
+            <label>Domain Expiry Date</label>
+            <input type="date" id="settingDomainExpiry">
+          </div>
           <button type="submit" class="btn-primary">Save Changes</button>
         </form>
+      </div>
+
+      <div class="admin-section">
+        <h2>Developer Support</h2>
+        <p>For technical support, feature requests, or any issues, please contact the developer:</p>
+        <ul class="support-list" style="list-style: none; padding-left: 0;">
+          <li style="margin-bottom: 8px;"><strong>Contact:</strong> Ramesh Adhikari / Edumate Solutions</li>
+          <li style="margin-bottom: 8px;"><strong>Email:</strong> <a href="mailto:platformedumate@gmail.com">platformedumate@gmail.com</a></li>
+        </ul>
       </div>
     </div>
 

@@ -5,8 +5,8 @@ service cloud.firestore {
     // By default, deny all reads and writes.
     // We will grant access on a per-collection basis below.
 
-    // Helper function to check if a user is an authenticated admin.
-    // In this setup, any logged-in user is considered an admin.
+    // Helper function to check if a user is logged in.
+    // Since only admins have login credentials in your app, this is sufficient.
     function isAdmin() {
       return request.auth != null;
     }
@@ -17,8 +17,14 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Events & Settings: Public can read, but only admins can write/edit/delete.
-    match /(events|settings)/{document=**} {
+    // Events: Public can read, but only admins can write/edit/delete.
+    match /events/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Settings: Public can read, but only admins can write/edit/delete.
+    match /settings/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }

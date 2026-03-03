@@ -1,28 +1,28 @@
 // Menu data for the restaurant
 const menuData = {
   starters: [
-    { name: 'Crispy Calamari', price: '£7.95', desc: 'Lightly battered squid rings served with a zesty lemon aioli and chilli flakes.', tag: 'Chef Favourite' },
-    { name: 'Soup of the Day', price: '£5.95', desc: "Ask your server for today's freshly made seasonal soup, served with crusty bread.", tag: 'Seasonal' },
-    { name: 'Garlic Mushrooms', price: '£6.95', desc: 'Pan-fried button mushrooms in garlic butter and cream, served on toasted sourdough.', tag: 'Vegetarian' },
-    { name: 'Prawn Cocktail', price: '£8.50', desc: 'Classic Atlantic prawns Marie Rose sauce shredded gem lettuce rye bread.', tag: 'Classic' }
+    { name: 'Soya Manchurian', price: '£9.25', desc: 'Marinated soya pcs infused with chef special manchurain sauce.', tag: 'Veg Starter' },
+    { name: 'Panner Tikka', price: '£8.49', desc: "Premium Indian cottage cheese marinated in spices and place in out tandoor. This is cooked by dandling it above a live fire", tag: 'Veg Starter' },
+    { name: 'Chilli Prawns', price: '£9.49', desc: 'What a treat Battered King Prawns fried and tossed in a spicy sauce with onions and bell peppers.', tag: 'Non-Veg' },
+    { name: 'Tandoori Fish Tikka', price: '£8.99', desc: 'Special cuts of Panga Fish infused with aromatic herds and spices cooked in the Tandoor.', tag: 'Nov-veg' }
   ],
   mains: [
-    { name: 'Pan-Roasted Salmon', price: '£17.95', desc: 'Scottish salmon fillet asparagus crushed new potatoes dill cream sauce.', tag: 'Gluten Free' },
-    { name: 'Chicken Supreme', price: '£16.50', desc: 'Corn-fed chicken breast dauphinoise potato green beans tarragon jus.', tag: 'Chef Favourite' },
-    { name: 'Wild Mushroom Risotto', price: '£14.50', desc: 'Creamy arborio risotto truffle oil wild mushrooms parmesan.', tag: 'Vegetarian' },
-    { name: 'Beer-Battered Cod', price: '£15.90', desc: 'Classic fish and chips minted mushy peas tartare sauce chunky chips.', tag: 'Classic' }
+    { name: 'Garlic Chilli Chicken', price: '£9.99', desc: 'Pcs of chicken cooked in chilli ginger, garlic, making nice and hot sauce.', tag: 'Chef Special' },
+    { name: 'Lamb Claypot', price: '£10.49', desc: 'Slow cooked lamb with chefs special Sauce.', tag: 'Chef Favourite' },
+    { name: 'Soya Butter chicken', price: '£8.55', desc: '#Chunks of Soya chicken and mixed with reach creamy sauce.', tag: 'Vegetarian' },
+    { name: 'Panner Makhni', price: '£8.50', desc: 'Indian Cottage Cheese cooked in a rich and creamy sauce, contain nuts and dairies.', tag: 'Veggie Main' }
   ],
   grills: [
-    { name: '8oz Sirloin Steak', price: '£26.00', desc: 'Prime dry-aged sirloin grilled to your preference peppercorn sauce and fries.', tag: 'Popular' },
-    { name: '10oz Ribeye', price: '£29.00', desc: 'Beautifully marbled ribeye bone marrow butter grilled tomato watercress.', tag: 'Indulgent' },
-    { name: 'Lamb Cutlets', price: '£24.00', desc: 'Lamb cutlets with mint sauce and roasted vegetables.', tag: 'Chef Favourite' },
-    { name: 'Mixed Grill Platter', price: '£28.00', desc: 'A feast of steaks, burgers, sausages and all the trimmings.', tag: 'Sharing' }
+    { name: 'Large Mix Grill', price: '£19.99', desc: 'Lamb chops, Chicken tikka, chicken wings and Kebab.', tag: 'Popular' },
+    { name: 'Mo:Mo Chicken', price: '£6.99', desc: 'Served with spicy tomato Chutney (8pcs).', tag: 'Nepali Favourite' },
+    { name: 'Boneless Mix Grill', price: '£17.49', desc: 'Sheek Kebab, Chicken Tikka and fish Tikka.', tag: 'Mix grill' },
+    { name: 'Mixed Grill Veg', price: '£18.99', desc: 'Soya chicken, Soya Lamb and Paneer Tikka.', tag: 'Chef special' }
   ],
   desserts: [
-    { name: 'Sticky Toffee Pudding', price: '£7.95', desc: 'Warm sponge pudding with toffee sauce and vanilla ice cream.', tag: 'Popular' },
-    { name: 'Chocolate Fondant', price: '£8.50', desc: 'Warm chocolate cake with molten center and cream.', tag: 'Indulgent' },
-    { name: 'Lemon Tart', price: '£7.50', desc: 'Tangy lemon tart with meringue topping.', tag: 'Light' },
-    { name: 'Ice Cream Selection', price: '£5.95', desc: 'Choice of vanilla, strawberry, chocolate or mint.', tag: 'Classic' }
+    { name: 'Maltesers Cheese Cake', price: '£4.99', desc: '', tag: 'Popular' },
+    { name: 'Gulab Jamun and Ice Cream', price: '£4.99', desc: '', tag: 'Indian Style' },
+    { name: 'Matka Kulfi', price: '£4.99', desc: '', tag: 'Delicious' },
+    { name: 'Cholocate Brownie with Ice cream', price: '£4.99', desc: '', tag: 'Classic' }
   ]
 };
 

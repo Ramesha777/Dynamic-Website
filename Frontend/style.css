@@ -431,10 +431,24 @@ section { padding: 7rem 4rem; }
 
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
   max-width: 1100px;
   margin: 3rem auto 0;
+}
+
+/* Events grid responsive - 2 columns on tablet */
+@media (max-width: 900px) {
+  .events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Events grid responsive - 1 column on mobile */
+@media (max-width: 600px) {
+  .events-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .event-card {
