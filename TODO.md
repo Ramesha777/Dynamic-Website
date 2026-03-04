@@ -1,22 +1,12 @@
-# TODO: Fix Reservation System
+# TODO: Fix Mail/Email Expiry on Admin Portal - COMPLETED
 
-## Task
-Fix when customer reserve a table it does not show a booking ID for customer to check and allow admin to view all details of booking
+## Changes Made:
+1. ✅ Added Email Expiry Date input field to Settings form in `admin.html`
+2. ✅ Updated `loadSettings()` in `admin.js` to load and display email expiry days on dashboard
+3. ✅ Updated `handleSettingsSubmit()` in `admin.js` to save email expiry date to Firestore
 
-## Plan
+## Summary:
+- The admin portal now properly handles email expiry dates separately from domain expiry dates
+- Both Domain Expiry and Email Expiry can be configured in the Settings page
+- Both dates are displayed on the Dashboard with color-coded warnings (red for expired, orange for < 60 days)
 
-### 1. Frontend/index.html
-- [x] Add reservation form submission handler
-- [x] Generate unique booking ID (code)
-- [x] Save reservation to Firestore with booking code
-- [x] Show success message with booking ID to customer
-
-### 2. Frontend/admin.html
-- [x] Add "Special Requests" column to reservations table
-- [x] Add "Created At" column to show when reservation was made
-
-### 3. Frontend/admin.js
-- [x] Populate "Special Requests" column with data
-- [x] Populate "Created" column with timestamp
-
-## Status: Completed ✅

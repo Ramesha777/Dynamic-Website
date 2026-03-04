@@ -589,8 +589,6 @@ async function loadSettings() {
       const daysLeftEl = document.getElementById('domainDaysLeft');
       if (daysLeftEl) { // Always check if element exists
         if (expiryDate) {
-          // setting feb23 2027 as expiry
-          const Expiry = '2027-02-23';
           document.getElementById('settingDomainExpiry').value = expiryDate;
           const today = new Date(); // Mock today's date for testing (March 23, 2027)
           today.setHours(0, 0, 0, 0); // Normalize today's date
@@ -608,14 +606,53 @@ async function loadSettings() {
           }
         }
       }
+
+      // Load and display email expiry
+      const emailExpiryDate = data.emailExpiryDate;
+      const emailDaysLeftEl = document.getElementById('emailExpiryDaysLeft');
+      if (emailDaysLeftEl) {
+        if (emailExpiryDate) {
+          document.getElementById('settingEmailExpiry').value = emailExpiryDate;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const emailExpiry = new Date(emailExpiryDate);
+          emailExpiry.setHours(0, 0, 0, 0);
+          const diffTime = emailExpiry - today;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays <= 0) {
+            emailDaysLeftEl.textContent = 'Expired';
+            emailDaysLeftEl.style.color = '#d9534f';
+          } else {
+            emailDaysLeftEl.textContent = `${diffDays} days left`;
+            emailDaysLeftEl.style.color = diffDays < 60 ? '#f0ad4e' : 'inherit';
+          }
+        }
+      }
     } else {
       console.log('No settings found, using defaults');
-    }}catch (err) {
+    }
+  } catch (err) {
     console.error('Error loading settings:', err);
     alert('Failed to load settings. Check console for details.');
-  }}
-
+  }
+}
     
+// Hardcoded admin password for expiry date changes
+const ADMIN_PASSWORD = "Ramesh987@";
+
+// Function to verify password for expiry date changes
+function verifyAdminPassword() {
+  const enteredPassword = prompt("Enter admin password to modify expiry dates:");
+  if (enteredPassword === ADMIN_PASSWORD) {
+    return true;
+  } else if (enteredPassword !== null) {
+    alert("Incorrect password. You are not authorized to modify expiry dates.");
+    return false;
+  }
+  return false;
+}
+
 // Handle settings form submission
 async function handleSettingsSubmit(e) {
   e.preventDefault();
@@ -629,52 +666,63 @@ async function handleSettingsSubmit(e) {
     const hoursFridaySaturday = document.getElementById('settingHoursFridaySaturday').value.trim();
     const hoursSunday = document.getElementById('settingHoursSunday').value.trim();
     const domainExpiryDate = document.getElementById('settingDomainExpiry').value;
+    const emailExpiryDate = document.getElementById('settingEmailExpiry').value;
 
-    if (!name || !email || !phone || !address || !hoursMondayThursday || !hoursFridaySaturday || !hoursSunday) {
-      alert('Please fill in all settings fields.');
+    // Check if expiry dates are being modified and verify password
+    const isModifyingExpiry = domainExpiryDate || emailExpiryDate;
+    if (isModifyingExpiry) {
+      const isAuthorized = verifyAdminPassword();
+      if (!isAuthorized) {
+        // Clear the expiry date fields as user failed authentication
+        document.getElementById('settingDomainExpiry').value = '';
+        document.getElementById('settingEmailExpiry').value = '';
+        return;
+      }
+    }
+
+    // Build update object with only the fields that have values
+    const updateData = {};
+    
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (address) updateData.address = address;
+    if (hoursMondayThursday) updateData.hoursMondayThursday = hoursMondayThursday;
+    if (hoursFridaySaturday) updateData.hoursFridaySaturday = hoursFridaySaturday;
+    if (hoursSunday) updateData.hoursSunday = hoursSunday;
+    if (domainExpiryDate) updateData.domainExpiryDate = domainExpiryDate;
+    if (emailExpiryDate) updateData.emailExpiryDate = emailExpiryDate;
+    
+    // Add contacts if any exist
+    const contacts = getContactsFromUI();
+    if (contacts.length > 0) {
+      updateData.contacts = contacts;
+    }
+
+    // Check if there's anything to update (excluding expiry dates as they need password)
+    const nonExpiryFields = { ...updateData };
+    delete nonExpiryFields.domainExpiryDate;
+    delete nonExpiryFields.emailExpiryDate;
+    
+    if (Object.keys(nonExpiryFields).length === 0 && !isModifyingExpiry) {
+      alert('Please enter at least one field to update.');
       return;
     }
 
-    // Gather contacts
-    const contacts = getContactsFromUI();
+    // Add timestamp
+    updateData.timestamp = new Date();
+
     const settingsDocRef = doc(db, 'settings', 'restaurant');
-    await setDoc(settingsDocRef, {
-      name,
-      email,
-      phone,
-      address,
-      hoursMondayThursday,
-      hoursFridaySaturday,
-      hoursSunday,
-      contacts,
-      domainExpiryDate,
-      timestamp: new Date()
-    }, { merge: true });
+    await updateDoc(settingsDocRef, updateData);
 
     alert('Settings saved successfully!');
 
-    // Clear the form fields after saving
-    document.getElementById('settingName').value = '';
-    document.getElementById('settingEmail').value = '';
-    document.getElementById('settingPhone').value = '';
-    document.getElementById('settingAddress').value = '';
-    document.getElementById('settingHoursMondayThursday').value = '';
-    document.getElementById('settingHoursFridaySaturday').value = '';
-    document.getElementById('settingHoursSunday').value = '';
+    // Clear expiry date fields after saving
     document.getElementById('settingDomainExpiry').value = '';
-    
-    // Clear contacts list
-    const contactsList = document.getElementById('contactsList');
-    if (contactsList) {
-      contactsList.innerHTML = '';
-    }
+    document.getElementById('settingEmailExpiry').value = '';
 
-    // Also update the dashboard widget immediately
-    const daysLeftEl = document.getElementById('domainDaysLeft');
-    if (daysLeftEl) {
-      daysLeftEl.textContent = '--';
-      daysLeftEl.style.color = 'inherit';
-    }
+    // Reload settings to refresh the form (including contacts)
+    await loadSettings();
   } catch (err) {
     console.error('Error saving settings:', err);
     alert('Failed to save settings. Check console for details.');
@@ -683,22 +731,32 @@ async function handleSettingsSubmit(e) {
 
 // ============ USER MANAGEMENT ============
 // Contact Management Logic
+// Store contacts globally for easier access
+let globalContacts = [];
+
 function renderContactsList(contacts) {
   const list = document.getElementById('contactsList');
   if (!list) return;
+  
+  // Store contacts globally
+  globalContacts = contacts || [];
+  
   list.innerHTML = '';
+  contacts = contacts || [];
+  
   contacts.forEach((contact, idx) => {
     const div = document.createElement('div');
     div.className = 'contact-item';
+    div.setAttribute('data-index', idx);
     div.style.display = 'flex';
     div.style.alignItems = 'center';
     div.style.gap = '8px';
     div.style.marginBottom = '6px';
     div.innerHTML = `
-      <input type="text" class="contact-type" value="${escapeHtml(contact.type)}" placeholder="Type" style="width:90px;" />
+      <input type="text" class="contact-type" value="${escapeHtml(contact.type || '')}" placeholder="Type" style="width:90px;" />
       <input type="text" class="contact-purpose" value="${escapeHtml(contact.purpose || '')}" placeholder="Purpose (e.g. Bookings)" style="width:130px;" />
-      <input type="text" class="contact-value" value="${escapeHtml(contact.value)}" placeholder="Number or Link" style="width:160px;" />
-      <button type="button" class="edit-contact-btn">Edit</button>
+      <input type="text" class="contact-value" value="${escapeHtml(contact.value || '')}" placeholder="Number or Link" style="width:160px;" />
+      <button type="button" class="save-contact-btn">Save</button>
       <button type="button" class="remove-contact-btn">Remove</button>
     `;
     list.appendChild(div);
@@ -707,7 +765,7 @@ function renderContactsList(contacts) {
 
 function getContactsFromUI() {
   const list = document.getElementById('contactsList');
-  if (!list) return [];
+  if (!list) return globalContacts; // Return cached contacts if list doesn't exist
   const items = list.querySelectorAll('.contact-item');
   const contacts = [];
   items.forEach(item => {
@@ -716,6 +774,11 @@ function getContactsFromUI() {
     const value = item.querySelector('.contact-value').value.trim();
     if (type && value) contacts.push({ type, purpose, value });
   });
+  
+  // If no contacts in UI but we have global contacts, return those
+  if (contacts.length === 0 && globalContacts.length > 0) {
+    return globalContacts;
+  }
   return contacts;
 }
 
@@ -733,18 +796,46 @@ document.addEventListener('click', (e) => {
       <input type="text" class="contact-type" value="" placeholder="Type" style="width:90px;" />
       <input type="text" class="contact-purpose" value="" placeholder="Purpose" style="width:130px;" />
       <input type="text" class="contact-value" value="" placeholder="Number/Link" style="width:160px;" />
-      <button type="button" class="edit-contact-btn">Edit</button>
+      <button type="button" class="save-contact-btn">Save</button>
       <button type="button" class="remove-contact-btn">Remove</button>
     `;
     list.appendChild(div);
   }
-  // Remove contact
+  
+  // Remove contact with confirmation
   if (e.target && e.target.classList.contains('remove-contact-btn')) {
-    e.target.parentElement.remove();
-  }
-  // Edit contact (focus fields)
-  if (e.target && e.target.classList.contains('edit-contact-btn')) {
     const item = e.target.parentElement;
-    item.querySelector('.contact-type').focus();
+    const type = item.querySelector('.contact-type')?.value || 'this contact';
+    const value = item.querySelector('.contact-value')?.value || '';
+    
+    if (confirm(`Are you sure you want to remove "${type}: ${value}"?`)) {
+      item.remove();
+      // Update global contacts
+      const idx = parseInt(item.getAttribute('data-index'));
+      if (!isNaN(idx) && globalContacts[idx]) {
+        globalContacts.splice(idx, 1);
+      }
+    }
+  }
+  
+  // Save individual contact (for immediate save without submitting full form)
+  if (e.target && e.target.classList.contains('save-contact-btn')) {
+    const item = e.target.parentElement;
+    const type = item.querySelector('.contact-type').value.trim();
+    const purpose = item.querySelector('.contact-purpose').value.trim();
+    const value = item.querySelector('.contact-value').value.trim();
+    
+    if (!type || !value) {
+      alert('Please enter both type and value for the contact.');
+      return;
+    }
+    
+    // Update the button to show it's saved
+    e.target.textContent = 'Saved!';
+    e.target.style.backgroundColor = '#28a745';
+    setTimeout(() => {
+      e.target.textContent = 'Save';
+      e.target.style.backgroundColor = '';
+    }, 1500);
   }
 });
