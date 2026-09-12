@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explore Menu – Whitmore Reans</title>
+<link rel="icon" href="images/logo.jpeg" type="image/jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=dishimg2">
+</head>
+<body class="explore-menu-page">
+
+<nav>
+  <div class="nav-logo">Whitmore Reans<br><span>Bars & Restaurant</span></div>
+  <ul class="nav-links">
+    <li><a href="index.html#home">Home</a></li>
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="index.html#menu">Menu</a></li>
+    <li><a href="menu.html" class="nav-cta">Explore Menu</a></li>
+    <li><a href="index.html#contact">Reserve a Table</a></li>
+  </ul>
+</nav>
+
+<section class="explore-page">
+  <div class="section-label">Full Menu</div>
+  <h1 class="section-title">Explore Our <em>Dishes</em></h1>
+  <div class="explore-toolbar">
+    <input type="search" id="exploreSearch" class="explore-search" placeholder="Search dishes, specs or categories..." aria-label="Search menu">
+    <div class="menu-tabs" id="exploreCategoryTabs">
+      <button type="button" class="menu-tab active" data-category="all">All</button>
+    </div>
+  </div>
+  <div id="exploreMenuContent">
+    <div class="explore-empty">Loading menu...</div>
+  </div>
+  <div style="text-align:center;">
+    <a href="index.html#menu" class="btn-outline explore-back">Back to homepage</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Whitmore Reans <span>Bars & Restaurant</span></div>
+  <ul class="footer-links">
+    <li><a href="index.html#home">Home</a></li>
+    <li><a href="index.html#menu">Menu</a></li>
+    <li><a href="menu.html">Explore Menu</a></li>
+    <li><a href="index.html#contact">Contact</a></li>
+  </ul>
+  <p class="footer-copy">2025 <span class="footer-restaurant-name">Whitmore Reans Bars & Restaurant</span> - <span class="pub-address">Wolverhampton, WV6 0QN</span></p>
+</footer>
+
+<script defer type="module">
+  import { firebaseConfig } from '../Backend/firebaseconfig.js';
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window.db = db;
+  window.collection = collection;
+  window.getDocs = getDocs;
+
+  const script = document.createElement('script');
+  script.src = 'menu.js?v=dishimg2';
+  script.onerror = () => console.error('Failed to load menu.js');
+  document.head.appendChild(script);
+</script>
+</body>
+</html>

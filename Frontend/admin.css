@@ -118,6 +118,7 @@ body {
   display: flex;
   list-style: none;
   gap: 30px;
+  flex-wrap: wrap;
 }
 
 .admin-nav-links a {
@@ -349,6 +350,104 @@ body {
   background: #b8984f;
 }
 
+.btn-secondary {
+  padding: 12px 25px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  border-color: #c9a962;
+  color: #1a1a1a;
+}
+
+.csv-help {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.csv-import-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.csv-import-row .btn-primary,
+.csv-import-row .btn-secondary {
+  margin-bottom: 0;
+}
+
+.csv-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #444;
+}
+
+.menu-import-status {
+  margin-top: 12px;
+  font-weight: 600;
+  min-height: 1.2em;
+}
+
+.menu-admin-thumb {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  background: #eee;
+  border: 1px solid #e0e0e0;
+}
+
+.menu-admin-photo-cell {
+  min-width: 130px;
+}
+
+.menu-admin-photo-cell .muted {
+  color: #999;
+  font-size: 13px;
+}
+
+.menu-admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.menu-admin-toolbar h2 {
+  margin-bottom: 0;
+  margin-right: auto;
+}
+
+.menu-admin-toolbar input[type="search"] {
+  min-width: 220px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.danger-btn {
+  background: #d9534f !important;
+}
+
+.danger-btn:hover {
+  background: #c9302c !important;
+}
+
 /* Settings Form */
 .settings-form {
   max-width: 600px;
@@ -363,6 +462,13 @@ body {
   font-weight: 600;
   margin-bottom: 8px;
   color: #333;
+}
+
+.settings-form .field-hint {
+  font-size: 13px;
+  color: #666;
+  font-weight: 400;
+  margin: -4px 0 10px;
 }
 
 .settings-form input,

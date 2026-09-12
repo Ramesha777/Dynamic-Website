@@ -2,8 +2,8 @@
 import { firebaseConfig } from '../Backend/firebaseconfig.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Initialize Firebase (modular)
 const app = initializeApp(firebaseConfig);
@@ -29,7 +29,7 @@ onAuthStateChanged(auth, (user) => {
     loadAllReservations();
     loadEvents();
     loadSettings();
-    loadUsers();
+    loadFoodMenu();
     
     // Wire settings form after user is authenticated
     setTimeout(() => {
@@ -40,9 +40,7 @@ onAuthStateChanged(auth, (user) => {
       }
       const addEventBtn = document.getElementById('addEventBtn');
       if (addEventBtn) addEventBtn.addEventListener('click', (e) => { e.preventDefault(); showEventModal(); });
-      
-      const addUserBtn = document.getElementById('addUserBtn');
-      if (addUserBtn) addUserBtn.addEventListener('click', (e) => { e.preventDefault(); showUserModal(); });
+      wireFoodMenuControls();
     }, 200);
   } else {
     // User is not logged in
@@ -125,6 +123,7 @@ navLinks.forEach(link => {
     if (page === 'reservations') loadAllReservations();
     // Load events when opening Events page (page key is 'menu')
     if (page === 'menu') loadEvents();
+    if (page === 'foodmenu') loadFoodMenu();
   });
 });
 
@@ -187,14 +186,6 @@ async function loadAllReservations() {
       codeCell.textContent = data.code || id;
       row.appendChild(codeCell);
 
-
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'action-btn delete-reservation';
-        deleteBtn.style.background = '#d9534f';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.setAttribute('data-id', id);
-        actionCell.appendChild(deleteBtn);
       // Name
       const nameCell = document.createElement('td');
       nameCell.textContent = data.name || '';
@@ -205,7 +196,6 @@ async function loadAllReservations() {
       emailCell.textContent = data.email || '';
       row.appendChild(emailCell);
 
-        const deleteBtn = e.target.closest('.delete-reservation');
       // Phone
       const phoneCell = document.createElement('td');
       phoneCell.textContent = data.phone || '';
@@ -226,6 +216,21 @@ async function loadAllReservations() {
       guestsCell.textContent = data.guests || '';
       row.appendChild(guestsCell);
 
+      // Special Requests
+      const specialRequestsCell = document.createElement('td');
+      specialRequestsCell.textContent = data.specialRequests || '-';
+      row.appendChild(specialRequestsCell);
+
+      // Created (timestamp)
+      const createdCell = document.createElement('td');
+      if (data.timestamp) {
+        const createdDate = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+        createdCell.textContent = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        createdCell.textContent = '-';
+      }
+      row.appendChild(createdCell);
+
       // Status
       const statusCell = document.createElement('td');
       const statusSpan = document.createElement('span');
@@ -236,31 +241,11 @@ async function loadAllReservations() {
 
       // Actions
       const actionCell = document.createElement('td');
-
-        if (deleteBtn) {
-          const id = deleteBtn.getAttribute('data-id');
-          if (confirm('Are you sure you want to delete this reservation?')) {
-            deleteReservation(id);
-          }
-          return;
-        }
       actionCell.style.display = 'flex';
       actionCell.style.gap = '4px';
       actionCell.style.flexWrap = 'wrap';
 
       // Edit button
-
-  // Delete reservation by ID
-  async function deleteReservation(id) {
-    try {
-      await deleteDoc(doc(db, 'reservations', id));
-      alert('Reservation deleted successfully!');
-      loadAllReservations();
-    } catch (err) {
-      console.error('Error deleting reservation:', err);
-      alert('Failed to delete reservation: ' + err.message);
-    }
-  }
       const editBtn = document.createElement('button');
       editBtn.className = 'action-btn edit-reservation';
       editBtn.setAttribute('data-id', id);
@@ -369,6 +354,7 @@ async function loadEvents() {
           <td>${data.imageUrl ? `<img src="${escapeHtml(data.imageUrl)}" alt="img" style="height:40px;object-fit:cover;border-radius:4px;"/>` : ''}</td>
           <td>${escapeHtml((data.description || '').substring(0, 120))}</td>
           <td style="white-space:nowrap">
+            <button class="action-btn edit-event" data-id="${id}" data-title="${escapeHtml(data.title || '')}" data-start="${escapeHtml(data.startDate || '')}" data-end="${escapeHtml(data.endDate || '')}" data-image="${escapeHtml(data.imageUrl || '')}" data-desc="${escapeHtml(data.description || '')}">Edit</button>
             <button class="action-btn delete-event" data-id="${id}">Delete</button>
           </td>
         `;
@@ -379,57 +365,81 @@ async function loadEvents() {
   }
 }
 
-// Show modal to create a new event
-function showEventModal() {
-  let modal = document.getElementById('eventModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'eventModal';
-    modal.style.position = 'fixed';
-    modal.style.left = '0';
-    modal.style.top = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.background = 'rgba(0,0,0,0.5)';
-    modal.innerHTML = `
-      <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
-        <h3 style="margin-top:0">Create Event</h3>
-        <div style="margin:8px 0"><label>Title</label><input id="eventTitle" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="display:flex;gap:8px;">
-          <div style="flex:1;margin:8px 0"><label>Start Date</label><input id="eventStart" type="date" style="width:100%;padding:8px;margin-top:6px;"/></div>
-          <div style="flex:1;margin:8px 0"><label>End Date</label><input id="eventEnd" type="date" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        </div>
-        <div style="margin:8px 0"><label>Photo URL</label><input id="eventImage" placeholder="https://.../photo.jpg" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Description</label><textarea id="eventDesc" style="width:100%;padding:8px;margin-top:6px;" rows="4"></textarea></div>
-        <div style="text-align:right;margin-top:12px;">
-          <button id="eventCancel" style="margin-right:8px;">Cancel</button>
-          <button id="eventSave">Save</button>
-        </div>
+// Show modal to create or edit an event
+function showEventModal(eventData = null) {
+  // Remove existing modal if any
+  const existingModal = document.getElementById('eventModal');
+  if (existingModal) existingModal.remove();
+
+  const isEdit = eventData && eventData.id;
+  const modal = document.createElement('div');
+  modal.id = 'eventModal';
+  modal.style.position = 'fixed';
+  modal.style.left = '0';
+  modal.style.top = '0';
+  modal.style.width = '100%';
+  modal.style.height = '100%';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.background = 'rgba(0,0,0,0.5)';
+  modal.innerHTML = `
+    <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
+      <h3 style="margin-top:0">${isEdit ? 'Edit Event' : 'Create Event'}</h3>
+      <div style="margin:8px 0"><label>Title</label><input id="eventTitle" style="width:100%;padding:8px;margin-top:6px;" value="${escapeHtml(eventData?.title || '')}"/></div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;margin:8px 0"><label>Start Date</label><input id="eventStart" type="date" style="width:100%;padding:8px;margin-top:6px;" value="${eventData?.startDate || ''}"/></div>
+        <div style="flex:1;margin:8px 0"><label>End Date</label><input id="eventEnd" type="date" style="width:100%;padding:8px;margin-top:6px;" value="${eventData?.endDate || ''}"/></div>
       </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector('#eventCancel').addEventListener('click', () => modal.remove());
-  }
+      <div style="margin:8px 0"><label>Photo URL</label><input id="eventImage" placeholder="https://.../photo.jpg" style="width:100%;padding:8px;margin-top:6px;" value="${escapeHtml(eventData?.imageUrl || '')}"/></div>
+      <div style="margin:8px 0"><label>Description</label><textarea id="eventDesc" style="width:100%;padding:8px;margin-top:6px;" rows="4">${escapeHtml(eventData?.description || '')}</textarea></div>
+      <div style="text-align:right;margin-top:12px;">
+        <button id="eventCancel" style="margin-right:8px;">Cancel</button>
+        <button id="eventSave">${isEdit ? 'Update' : 'Save'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  modal.querySelector('#eventCancel').addEventListener('click', () => modal.remove());
 
   const saveBtn = modal.querySelector('#eventSave');
   const onSave = async () => {
-      const title = modal.querySelector('#eventTitle').value.trim();
-      const startDate = modal.querySelector('#eventStart').value;
-      const endDate = modal.querySelector('#eventEnd').value;
-      const imageUrl = modal.querySelector('#eventImage').value.trim();
-      const desc = modal.querySelector('#eventDesc').value.trim();
+    const title = modal.querySelector('#eventTitle').value.trim();
+    const startDate = modal.querySelector('#eventStart').value;
+    const endDate = modal.querySelector('#eventEnd').value;
+    const imageUrl = modal.querySelector('#eventImage').value.trim();
+    const desc = modal.querySelector('#eventDesc').value.trim();
+    
     if (!title) return alert('Title required');
+    
     try {
-        await addDoc(collection(db, 'events'), { title, startDate, endDate, imageUrl, description: desc, timestamp: new Date() });
+      if (isEdit) {
+        // Update existing event
+        await updateDoc(doc(db, 'events', eventData.id), { 
+          title, 
+          startDate, 
+          endDate, 
+          imageUrl, 
+          description: desc 
+        });
+      } else {
+        // Create new event
+        await addDoc(collection(db, 'events'), { 
+          title, 
+          startDate, 
+          endDate, 
+          imageUrl, 
+          description: desc, 
+          timestamp: new Date() 
+        });
+      }
       modal.remove();
       saveBtn.removeEventListener('click', onSave);
       loadEvents();
     } catch (err) {
-      console.error('Error creating event:', err);
-      alert('Failed to create event');
+      console.error('Error saving event:', err);
+      alert('Failed to save event');
     }
   };
   saveBtn.addEventListener('click', onSave);
@@ -450,11 +460,26 @@ document.addEventListener('click', async (e) => {
   }
 });
 
+// Delegated edit handler for events
+document.addEventListener('click', (e) => {
+  const editBtn = e.target.closest('.edit-event');
+  if (!editBtn) return;
+  
+  const id = editBtn.getAttribute('data-id');
+  const title = editBtn.getAttribute('data-title');
+  const startDate = editBtn.getAttribute('data-start');
+  const endDate = editBtn.getAttribute('data-end');
+  const imageUrl = editBtn.getAttribute('data-image');
+  const description = editBtn.getAttribute('data-desc');
+  
+  showEventModal({ id, title, startDate, endDate, imageUrl, description });
+});
+
 // Utility: simple HTML escape
 function escapeHtml(s) {
   if (!s) return '';
   return s.toString().replace(/[&<>"'`]/g, function (c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '`': '&#96;'}[c];
+    return {'&':'&amp;','<':'<','>':'>','"':'"',"'":'&#39;', '`': '&#96;'}[c];
   });
 }
 
@@ -558,10 +583,84 @@ async function loadSettings() {
       document.getElementById('settingHoursMondayThursday').value = data.hoursMondayThursday || '12pm - 11pm';
       document.getElementById('settingHoursFridaySaturday').value = data.hoursFridaySaturday || '12pm - 1am';
       document.getElementById('settingHoursSunday').value = data.hoursSunday || '12pm - 10pm';
+
+      const deliverooEl = document.getElementById('settingDeliverooUrl');
+      const justEatEl = document.getElementById('settingJustEatUrl');
+      const uberEatsEl = document.getElementById('settingUberEatsUrl');
+      if (deliverooEl) deliverooEl.value = data.deliverooUrl || '';
+      if (justEatEl) justEatEl.value = data.justEatUrl || '';
+      if (uberEatsEl) uberEatsEl.value = data.uberEatsUrl || '';
+
+      // Load contacts
+      renderContactsList(data.contacts || []);
+
+      // Load and display domain expiry
+      const expiryDate = data.domainExpiryDate;
+      const daysLeftEl = document.getElementById('domainDaysLeft');
+      if (daysLeftEl) { // Always check if element exists
+        if (expiryDate) {
+          document.getElementById('settingDomainExpiry').value = expiryDate;
+          const today = new Date(); // Mock today's date for testing (March 23, 2027)
+          today.setHours(0, 0, 0, 0); // Normalize today's date
+          const expiry = new Date(expiryDate); // Normalize expiry date
+          expiry.setHours(0, 0, 0, 0);// Calculate days left
+          const diffTime = expiry - today;// Calculate days left
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));// Display days left with color coding
+
+          if (diffDays <= 0) {
+            daysLeftEl.textContent = 'Expired';
+            daysLeftEl.style.color = '#d9534f';
+          } else {
+            daysLeftEl.textContent = `${diffDays} days left`;
+            daysLeftEl.style.color = diffDays < 60 ? '#f0ad4e' : 'inherit';
+          }
+        }
+      }
+
+      // Load and display email expiry
+      const emailExpiryDate = data.emailExpiryDate;
+      const emailDaysLeftEl = document.getElementById('emailExpiryDaysLeft');
+      if (emailDaysLeftEl) {
+        if (emailExpiryDate) {
+          document.getElementById('settingEmailExpiry').value = emailExpiryDate;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const emailExpiry = new Date(emailExpiryDate);
+          emailExpiry.setHours(0, 0, 0, 0);
+          const diffTime = emailExpiry - today;
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays <= 0) {
+            emailDaysLeftEl.textContent = 'Expired';
+            emailDaysLeftEl.style.color = '#d9534f';
+          } else {
+            emailDaysLeftEl.textContent = `${diffDays} days left`;
+            emailDaysLeftEl.style.color = diffDays < 60 ? '#f0ad4e' : 'inherit';
+          }
+        }
+      }
+    } else {
+      console.log('No settings found, using defaults');
     }
   } catch (err) {
     console.error('Error loading settings:', err);
+    alert('Failed to load settings. Check console for details.');
   }
+}
+    
+// Hardcoded admin password for expiry date changes
+const ADMIN_PASSWORD = "Ramesh987@";
+
+// Function to verify password for expiry date changes
+function verifyAdminPassword() {
+  const enteredPassword = prompt("Enter admin password to modify expiry dates:");
+  if (enteredPassword === ADMIN_PASSWORD) {
+    return true;
+  } else if (enteredPassword !== null) {
+    alert("Incorrect password. You are not authorized to modify expiry dates.");
+    return false;
+  }
+  return false;
 }
 
 // Handle settings form submission
@@ -576,25 +675,70 @@ async function handleSettingsSubmit(e) {
     const hoursMondayThursday = document.getElementById('settingHoursMondayThursday').value.trim();
     const hoursFridaySaturday = document.getElementById('settingHoursFridaySaturday').value.trim();
     const hoursSunday = document.getElementById('settingHoursSunday').value.trim();
+    const deliverooUrl = document.getElementById('settingDeliverooUrl')?.value.trim() || '';
+    const justEatUrl = document.getElementById('settingJustEatUrl')?.value.trim() || '';
+    const uberEatsUrl = document.getElementById('settingUberEatsUrl')?.value.trim() || '';
+    const domainExpiryDate = document.getElementById('settingDomainExpiry').value;
+    const emailExpiryDate = document.getElementById('settingEmailExpiry').value;
 
-    if (!name || !email || !phone || !address || !hoursMondayThursday || !hoursFridaySaturday || !hoursSunday) {
-      alert('Please fill in all settings fields.');
+    // Check if expiry dates are being modified and verify password
+    const isModifyingExpiry = domainExpiryDate || emailExpiryDate;
+    if (isModifyingExpiry) {
+      const isAuthorized = verifyAdminPassword();
+      if (!isAuthorized) {
+        // Clear the expiry date fields as user failed authentication
+        document.getElementById('settingDomainExpiry').value = '';
+        document.getElementById('settingEmailExpiry').value = '';
+        return;
+      }
+    }
+
+    // Build update object with only the fields that have values
+    const updateData = {};
+    
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (address) updateData.address = address;
+    if (hoursMondayThursday) updateData.hoursMondayThursday = hoursMondayThursday;
+    if (hoursFridaySaturday) updateData.hoursFridaySaturday = hoursFridaySaturday;
+    if (hoursSunday) updateData.hoursSunday = hoursSunday;
+    updateData.deliverooUrl = deliverooUrl;
+    updateData.justEatUrl = justEatUrl;
+    updateData.uberEatsUrl = uberEatsUrl;
+    if (domainExpiryDate) updateData.domainExpiryDate = domainExpiryDate;
+    if (emailExpiryDate) updateData.emailExpiryDate = emailExpiryDate;
+    
+    // Add contacts if any exist
+    const contacts = getContactsFromUI();
+    if (contacts.length > 0) {
+      updateData.contacts = contacts;
+    }
+
+    // Check if there's anything to update (excluding expiry dates as they need password)
+    const nonExpiryFields = { ...updateData };
+    delete nonExpiryFields.domainExpiryDate;
+    delete nonExpiryFields.emailExpiryDate;
+    
+    if (Object.keys(nonExpiryFields).length === 0 && !isModifyingExpiry) {
+      alert('Please enter at least one field to update.');
       return;
     }
 
+    // Add timestamp
+    updateData.timestamp = new Date();
+
     const settingsDocRef = doc(db, 'settings', 'restaurant');
-    await setDoc(settingsDocRef, {
-      name,
-      email,
-      phone,
-      address,
-      hoursMondayThursday,
-      hoursFridaySaturday,
-      hoursSunday,
-      timestamp: new Date()
-    }, { merge: true });
+    await updateDoc(settingsDocRef, updateData);
 
     alert('Settings saved successfully!');
+
+    // Clear expiry date fields after saving
+    document.getElementById('settingDomainExpiry').value = '';
+    document.getElementById('settingEmailExpiry').value = '';
+
+    // Reload settings to refresh the form (including contacts)
+    await loadSettings();
   } catch (err) {
     console.error('Error saving settings:', err);
     alert('Failed to save settings. Check console for details.');
@@ -602,170 +746,475 @@ async function handleSettingsSubmit(e) {
 }
 
 // ============ USER MANAGEMENT ============
+// Contact Management Logic
+// Store contacts globally for easier access
+let globalContacts = [];
 
-// Load all admin users from Firestore
-async function loadUsers() {
-  try {
-    const q = query(collection(db, 'adminUsers'), orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const tbody = document.getElementById('usersBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    // Add event listener for delete buttons
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const id = docSnap.id;
-
-      const row = document.createElement('tr');
-      row.setAttribute('data-id', id);
-
-      const nameCell = document.createElement('td');
-      nameCell.textContent = data.name || '';
-      row.appendChild(nameCell);
-
-      const emailCell = document.createElement('td');
-      emailCell.textContent = data.email || '';
-      row.appendChild(emailCell);
-
-      const dateCell = document.createElement('td');
-      const createdAt = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'N/A';
-      dateCell.textContent = createdAt;
-      row.appendChild(dateCell);
-
-      const actionCell = document.createElement('td');
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'action-btn';
-      deleteBtn.style.background = '#d9534f';
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.setAttribute('data-user-id', id);
-      deleteBtn.setAttribute('data-user-email', data.email);
-      actionCell.appendChild(deleteBtn);
-      row.appendChild(actionCell);
-
-      tbody.appendChild(row);
-    });
-
-    // Event delegation for delete buttons
-    tbody.addEventListener('click', (e) => {
-      const deleteBtn = e.target.closest('button[data-user-id]');
-      if (deleteBtn) {
-        const userId = deleteBtn.getAttribute('data-user-id');
-        const userEmail = deleteBtn.getAttribute('data-user-email');
-        if (confirm(`Are you sure you want to delete user: ${userEmail}?`)) {
-          deleteAdminUser(userId, userEmail);
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Error loading users:', error);
-  }
-}
-
-// Show modal to create new user
-function showUserModal() {
-  let modal = document.getElementById('userModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'userModal';
-    modal.style.position = 'fixed';
-    modal.style.left = '0';
-    modal.style.top = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.background = 'rgba(0,0,0,0.5)';
-    modal.style.zIndex = '9999';
-    modal.innerHTML = `
-      <div style="background:#fff;padding:20px;border-radius:8px;min-width:360px;">
-        <h3 style="margin-top:0">Create New User</h3>
-        <div style="margin:8px 0"><label>Name</label><input id="userName" type="text" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Email</label><input id="userEmail" type="email" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Password</label><input id="userPassword" type="password" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="margin:8px 0"><label>Confirm Password</label><input id="userPasswordConfirm" type="password" style="width:100%;padding:8px;margin-top:6px;"/></div>
-        <div style="text-align:right;margin-top:12px;">
-          <button id="userCancel" style="margin-right:8px;padding:8px 15px;background:#ccc;border:none;border-radius:4px;cursor:pointer;">Cancel</button>
-          <button id="userSave" style="padding:8px 15px;background:#c9a962;color:#fff;border:none;border-radius:4px;cursor:pointer;">Create User</button>
-        </div>
-      </div>
+function renderContactsList(contacts) {
+  const list = document.getElementById('contactsList');
+  if (!list) return;
+  
+  // Store contacts globally
+  globalContacts = contacts || [];
+  
+  list.innerHTML = '';
+  contacts = contacts || [];
+  
+  contacts.forEach((contact, idx) => {
+    const div = document.createElement('div');
+    div.className = 'contact-item';
+    div.setAttribute('data-index', idx);
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.gap = '8px';
+    div.style.marginBottom = '6px';
+    div.innerHTML = `
+      <input type="text" class="contact-type" value="${escapeHtml(contact.type || '')}" placeholder="Type" style="width:90px;" />
+      <input type="text" class="contact-purpose" value="${escapeHtml(contact.purpose || '')}" placeholder="Purpose (e.g. Bookings)" style="width:130px;" />
+      <input type="text" class="contact-value" value="${escapeHtml(contact.value || '')}" placeholder="Number or Link" style="width:160px;" />
+      <button type="button" class="save-contact-btn">Save</button>
+      <button type="button" class="remove-contact-btn">Remove</button>
     `;
-    document.body.appendChild(modal);
-    modal.querySelector('#userCancel').addEventListener('click', () => modal.remove());
-  }
-
-  const saveBtn = modal.querySelector('#userSave');
-  const onSave = async () => {
-    const name = modal.querySelector('#userName').value.trim();
-    const email = modal.querySelector('#userEmail').value.trim();
-    const password = modal.querySelector('#userPassword').value;
-    const passwordConfirm = modal.querySelector('#userPasswordConfirm').value;
-
-    if (!name || !email || !password) {
-      alert('Please fill in all fields');
-      return;
-    }
-
-    if (password !== passwordConfirm) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters');
-      return;
-    }
-
-    try {
-      // Create user in Firebase Auth
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Store user info in Firestore
-      await setDoc(doc(db, 'adminUsers', userCred.user.uid), {
-        name,
-        email,
-        createdAt: new Date(),
-        uid: userCred.user.uid
-      });
-
-      alert('User created successfully!');
-      modal.remove();
-      saveBtn.removeEventListener('click', onSave);
-      loadUsers();
-    } catch (err) {
-      console.error('Error creating user:', err);
-      alert('Error: ' + err.message);
-    }
-  };
-  saveBtn.addEventListener('click', onSave);
+    list.appendChild(div);
+  });
 }
 
-// Delete admin user
-async function deleteAdminUser(userId, userEmail) {
+function getContactsFromUI() {
+  const list = document.getElementById('contactsList');
+  if (!list) return globalContacts; // Return cached contacts if list doesn't exist
+  const items = list.querySelectorAll('.contact-item');
+  const contacts = [];
+  items.forEach(item => {
+    const type = item.querySelector('.contact-type').value.trim();
+    const purpose = item.querySelector('.contact-purpose').value.trim();
+    const value = item.querySelector('.contact-value').value.trim();
+    if (type && value) contacts.push({ type, purpose, value });
+  });
+  
+  // If no contacts in UI but we have global contacts, return those
+  if (contacts.length === 0 && globalContacts.length > 0) {
+    return globalContacts;
+  }
+  return contacts;
+}
+
+document.addEventListener('click', (e) => {
+  // Add contact
+  if (e.target && e.target.id === 'addContactBtn') {
+    const list = document.getElementById('contactsList');
+    const div = document.createElement('div');
+    div.className = 'contact-item';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.gap = '8px';
+    div.style.marginBottom = '6px';
+    div.innerHTML = `
+      <input type="text" class="contact-type" value="" placeholder="Type" style="width:90px;" />
+      <input type="text" class="contact-purpose" value="" placeholder="Purpose" style="width:130px;" />
+      <input type="text" class="contact-value" value="" placeholder="Number/Link" style="width:160px;" />
+      <button type="button" class="save-contact-btn">Save</button>
+      <button type="button" class="remove-contact-btn">Remove</button>
+    `;
+    list.appendChild(div);
+  }
+  
+  // Remove contact with confirmation
+  if (e.target && e.target.classList.contains('remove-contact-btn')) {
+    const item = e.target.parentElement;
+    const type = item.querySelector('.contact-type')?.value || 'this contact';
+    const value = item.querySelector('.contact-value')?.value || '';
+    
+    if (confirm(`Are you sure you want to remove "${type}: ${value}"?`)) {
+      item.remove();
+      // Update global contacts
+      const idx = parseInt(item.getAttribute('data-index'));
+      if (!isNaN(idx) && globalContacts[idx]) {
+        globalContacts.splice(idx, 1);
+      }
+    }
+  }
+  
+  // Save individual contact (for immediate save without submitting full form)
+  if (e.target && e.target.classList.contains('save-contact-btn')) {
+    const item = e.target.parentElement;
+    const type = item.querySelector('.contact-type').value.trim();
+    const purpose = item.querySelector('.contact-purpose').value.trim();
+    const value = item.querySelector('.contact-value').value.trim();
+    
+    if (!type || !value) {
+      alert('Please enter both type and value for the contact.');
+      return;
+    }
+    
+    // Update the button to show it's saved
+    e.target.textContent = 'Saved!';
+    e.target.style.backgroundColor = '#28a745';
+    setTimeout(() => {
+      e.target.textContent = 'Save';
+      e.target.style.backgroundColor = '';
+    }, 1500);
+  }
+});
+
+// ============ FOOD MENU (CSV IMPORT) ============
+let foodMenuItems = [];
+let foodMenuControlsWired = false;
+
+function normalizeImageUrl(value) {
+  let url = String(value || '').trim();
+  if (!url) return '';
+
+  // Allow pasting an <img src="..."> snippet from image hosts
+  const htmlSrc = url.match(/src\s*=\s*["']([^"']+)["']/i);
+  if (htmlSrc) url = htmlSrc[1].trim();
+
+  // Markdown ![alt](url)
+  const md = url.match(/\((https?:\/\/[^)\s]+)\)/i);
+  if (md) url = md[1].trim();
+
+  url = url.replace(/^<|>$/g, '').trim();
+
+  if (url.startsWith('//')) url = `https:${url}`;
+  if (/^www\./i.test(url)) url = `https://${url}`;
+
+  if (!/^https?:\/\//i.test(url)) return '';
+  // Viewer pages are not direct images — reject obvious non-file postimg share pages without /i.
+  return url;
+}
+
+function getDishImageUrl(item) {
+  if (!item || typeof item !== 'object') return '';
+  return normalizeImageUrl(
+    item.imageUrl || item.image || item.photoUrl || item.photo || item.img || item.imageLink || ''
+  );
+}
+
+function csvHeaderKey(header) {
+  const h = (header || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (['category', 'cat', 'section', 'type'].includes(h)) return 'category';
+  if (['name', 'dish', 'dishname', 'item', 'title', 'itemname'].includes(h)) return 'name';
+  if (['specification', 'specifications', 'spec', 'specs', 'description', 'desc', 'details'].includes(h)) return 'description';
+  if (['price', 'cost', 'amount'].includes(h)) return 'price';
+  if (['tag', 'tags', 'label', 'note', 'notes'].includes(h)) return 'tag';
+  if (['image', 'imageurl', 'imagelink', 'photo', 'photourl', 'photolink', 'picture', 'pic', 'img', 'imgurl', 'imagelinks', 'dishimage', 'dishphoto'].includes(h)) return 'imageUrl';
+  return '';
+}
+
+function parseCsvText(text) {
+  const src = String(text || '').replace(/^\uFEFF/, '');
+  const rows = [];
+  let row = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') {
+        cur += '"';
+        i++;
+      } else if (c === '"') {
+        inQuotes = false;
+      } else {
+        cur += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',' || c === ';') {
+      row.push(cur.trim());
+      cur = '';
+    } else if (c === '\n') {
+      row.push(cur.trim());
+      rows.push(row);
+      row = [];
+      cur = '';
+    } else if (c !== '\r') {
+      cur += c;
+    }
+  }
+  if (cur.length || row.length) {
+    row.push(cur.trim());
+    rows.push(row);
+  }
+  return rows.filter(r => r.some(cell => cell !== ''));
+}
+
+function formatMenuPrice(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^[£$€]/.test(raw)) return raw;
+  const num = raw.replace(/[^0-9.]/g, '');
+  return num ? `£${num}` : raw;
+}
+
+function rowsToMenuItems(rows) {
+  if (!rows.length) return [];
+  const keys = rows[0].map(csvHeaderKey);
+  const items = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const item = { category: '', name: '', description: '', price: '', tag: '', imageUrl: '' };
+    keys.forEach((key, idx) => {
+      if (key) item[key] = row[idx] || '';
+    });
+    item.name = (item.name || '').trim();
+    item.category = (item.category || 'Uncategorised').trim() || 'Uncategorised';
+    item.description = (item.description || '').trim();
+    item.price = formatMenuPrice(item.price);
+    item.tag = (item.tag || '').trim();
+    item.imageUrl = normalizeImageUrl(item.imageUrl);
+    if (item.name) {
+      item.sortOrder = items.length;
+      items.push(item);
+    }
+  }
+  return items;
+}
+
+function setMenuImportStatus(message, isError) {
+  const el = document.getElementById('menuImportStatus');
+  if (!el) return;
+  el.textContent = message || '';
+  el.style.color = isError ? '#d9534f' : '#155724';
+}
+
+async function commitBatches(ops) {
+  for (let i = 0; i < ops.length; i += 400) {
+    const batch = writeBatch(db);
+    ops.slice(i, i + 400).forEach(op => op(batch));
+    await batch.commit();
+  }
+}
+
+async function loadFoodMenu() {
+  const tbody = document.getElementById('foodMenuBody');
+  const countEl = document.getElementById('menuItemCount');
+  if (!tbody) return;
   try {
-    // Get current user
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      alert('You must be logged in');
-      return;
-    }
-
-    // Cannot delete self
-    if (currentUser.email === userEmail) {
-      alert('You cannot delete your own account');
-      return;
-    }
-
-    // Delete from Firestore
-    await deleteDoc(doc(db, 'adminUsers', userId));
-
-    console.log('User deleted from Firestore:', userEmail);
-    alert('User deleted successfully!');
-    loadUsers();
+    const snap = await getDocs(collection(db, 'menuItems'));
+    foodMenuItems = [];
+    snap.forEach(docSnap => {
+      foodMenuItems.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    foodMenuItems.sort((a, b) => {
+      const cat = String(a.category || '').localeCompare(String(b.category || ''));
+      if (cat !== 0) return cat;
+      return (a.sortOrder || 0) - (b.sortOrder || 0);
+    });
+    if (countEl) countEl.textContent = String(foodMenuItems.length);
+    renderFoodMenuTable();
   } catch (err) {
-    console.error('Error deleting user:', err);
-    alert('Failed to delete user: ' + err.message);
+    console.error('Error loading food menu:', err);
+    tbody.innerHTML = '<tr><td colspan="7">Could not load menu. Check console for details.</td></tr>';
   }
 }
 
+function renderFoodMenuTable() {
+  const tbody = document.getElementById('foodMenuBody');
+  if (!tbody) return;
+  const q = (document.getElementById('adminMenuSearch')?.value || '').toLowerCase().trim();
+  const rows = foodMenuItems.filter(item => {
+    if (!q) return true;
+    return [item.category, item.name, item.description, item.tag, item.price, item.imageUrl]
+      .join(' ')
+      .toLowerCase()
+      .includes(q);
+  });
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7">${foodMenuItems.length ? 'No matching dishes.' : 'No dishes yet. Import a CSV to create the menu.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(item => {
+    const url = getDishImageUrl(item);
+    const photo = url
+      ? `<img class="menu-admin-thumb" src="${escapeHtml(url)}" alt="${escapeHtml(item.name || 'Dish')}" referrerpolicy="no-referrer" onerror="if(!this.dataset.retry){this.dataset.retry='1';const u=this.src;this.removeAttribute('referrerpolicy');this.removeAttribute('src');this.src=u;}else{this.outerHTML='<span class=muted>Link broken</span>';}">`
+      : '<span class="muted">No photo</span>';
+    return `
+    <tr>
+      <td>${escapeHtml(item.category || '')}</td>
+      <td>${escapeHtml(item.name || '')}</td>
+      <td>${escapeHtml(item.description || '')}</td>
+      <td>${escapeHtml(item.price || '')}</td>
+      <td>${escapeHtml(item.tag || '')}</td>
+      <td class="menu-admin-photo-cell">${photo}</td>
+      <td>
+        <button type="button" class="action-btn edit-menu-item-btn" data-id="${escapeHtml(item.id)}">Add / Edit image</button>
+        <button type="button" class="action-btn danger-btn delete-menu-item-btn" data-id="${escapeHtml(item.id)}">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function downloadSampleMenuCsv() {
+  const csv = [
+    'category,name,specification,price,tag,image',
+    'Starters,Soya Manchurian,Marinated soya pieces in chef special manchurian sauce,9.25,Veg,https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=80',
+    'Mains,Garlic Chilli Chicken,Chicken cooked with chilli ginger and garlic,9.99,Chef Special,https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=800&q=80',
+    'Desserts,Gulab Jamun and Ice Cream,Warm gulab jamun served with ice cream,4.99,Indian Style,https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&q=80'
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'menu-sample.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importMenuCsv() {
+  const fileInput = document.getElementById('menuCsvFile');
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    setMenuImportStatus('Choose a CSV file first.', true);
+    return;
+  }
+  const mode = document.querySelector('input[name="menuImportMode"]:checked')?.value || 'replace';
+  setMenuImportStatus('Importing...');
+  try {
+    const text = await file.text();
+    const items = rowsToMenuItems(parseCsvText(text));
+    if (!items.length) {
+      setMenuImportStatus('No valid dishes found. Check that the CSV has category, name, specification, price and optional image columns.', true);
+      return;
+    }
+    if (mode === 'replace') {
+      if (!confirm(`This will replace the current menu with ${items.length} dish(es). Continue?`)) {
+        setMenuImportStatus('');
+        return;
+      }
+      const existing = await getDocs(collection(db, 'menuItems'));
+      const deletes = [];
+      existing.forEach(docSnap => {
+        deletes.push(batch => batch.delete(docSnap.ref));
+      });
+      await commitBatches(deletes);
+    }
+    const startOrder = mode === 'merge' ? foodMenuItems.length : 0;
+    const adds = items.map((item, idx) => batch => {
+      const ref = doc(collection(db, 'menuItems'));
+      batch.set(ref, {
+        ...item,
+        sortOrder: startOrder + idx,
+        timestamp: new Date()
+      });
+    });
+    await commitBatches(adds);
+    const categories = [...new Set(items.map(i => i.category))];
+    const withImages = items.filter(i => getDishImageUrl(i)).length;
+    const imageNote = withImages
+      ? `${withImages} with photos.`
+      : 'No image links found — add an "image" column with full https:// photo URLs, then re-import.';
+    setMenuImportStatus(`Imported ${items.length} dish(es) across ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}. ${imageNote}`);
+    if (fileInput) fileInput.value = '';
+    await loadFoodMenu();
+  } catch (err) {
+    console.error('CSV import failed:', err);
+    setMenuImportStatus('Import failed. Check the CSV format and try again.', true);
+  }
+}
+
+async function clearFoodMenu() {
+  if (!foodMenuItems.length) return;
+  if (!confirm('Delete the entire imported menu? This cannot be undone.')) return;
+  try {
+    const existing = await getDocs(collection(db, 'menuItems'));
+    const deletes = [];
+    existing.forEach(docSnap => {
+      deletes.push(batch => batch.delete(docSnap.ref));
+    });
+    await commitBatches(deletes);
+    await loadFoodMenu();
+    setMenuImportStatus('Menu cleared.');
+  } catch (err) {
+    console.error('Clear menu failed:', err);
+    alert('Could not clear the menu. Check console for details.');
+  }
+}
+
+function showDishImageModal(item) {
+  if (!item?.id) return;
+  const currentUrl = getDishImageUrl(item);
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.inset = '0';
+  modal.style.zIndex = '9999';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.background = 'rgba(0,0,0,0.5)';
+  modal.innerHTML = `
+    <div style="background:#fff;padding:22px;border-radius:10px;width:min(480px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.2);">
+      <h3 style="margin:0 0 6px;">Dish photo</h3>
+      <p style="margin:0 0 14px;color:#666;font-size:14px;">${escapeHtml(item.name || 'Dish')} · ${escapeHtml(item.category || '')}</p>
+      <label style="display:block;font-weight:600;margin-bottom:6px;">Image link (direct https URL)</label>
+      <input id="dishImageUrl" type="url" placeholder="https://i.postimg.cc/....jpg" value="${escapeHtml(currentUrl)}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;">
+      <p style="margin:8px 0 0;color:#888;font-size:12px;">Tip: on Postimages, copy <strong>Direct link</strong>. Leave empty to remove the photo.</p>
+      <div id="dishImagePreview" style="margin-top:14px;min-height:120px;background:#f5f5f5;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        ${currentUrl
+          ? `<img src="${escapeHtml(currentUrl)}" alt="Preview" style="width:100%;max-height:200px;object-fit:cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=color:#c00>Could not load this link</span>'">`
+          : '<span style="color:#999">No image yet</span>'}
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button type="button" id="dishImageCancel">Cancel</button>
+        <button type="button" id="dishImageSave" class="btn-primary" style="margin:0;">Save photo</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const input = modal.querySelector('#dishImageUrl');
+  const preview = modal.querySelector('#dishImagePreview');
+  const updatePreview = () => {
+    const url = normalizeImageUrl(input.value);
+    if (!url) {
+      preview.innerHTML = '<span style="color:#999">No image yet</span>';
+      return;
+    }
+    preview.innerHTML = `<img src="${escapeHtml(url)}" alt="Preview" style="width:100%;max-height:200px;object-fit:cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=color:#c00>Could not load this link</span>'">`;
+  };
+  input.addEventListener('input', updatePreview);
+  modal.querySelector('#dishImageCancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  modal.querySelector('#dishImageSave').addEventListener('click', async () => {
+    const imageUrl = normalizeImageUrl(input.value);
+    try {
+      await updateDoc(doc(db, 'menuItems', item.id), { imageUrl });
+      modal.remove();
+      await loadFoodMenu();
+    } catch (err) {
+      console.error('Save dish image failed:', err);
+      alert('Could not save the dish photo.');
+    }
+  });
+}
+
+function wireFoodMenuControls() {
+  if (foodMenuControlsWired) return;
+  foodMenuControlsWired = true;
+  document.getElementById('importMenuCsvBtn')?.addEventListener('click', importMenuCsv);
+  document.getElementById('downloadSampleCsvBtn')?.addEventListener('click', downloadSampleMenuCsv);
+  document.getElementById('clearMenuBtn')?.addEventListener('click', clearFoodMenu);
+  document.getElementById('adminMenuSearch')?.addEventListener('input', renderFoodMenuTable);
+  document.getElementById('foodMenuBody')?.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('.edit-menu-item-btn');
+    if (editBtn) {
+      const id = editBtn.getAttribute('data-id');
+      const item = foodMenuItems.find(x => x.id === id);
+      if (item) showDishImageModal(item);
+      return;
+    }
+    const btn = e.target.closest('.delete-menu-item-btn');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (!id || !confirm('Delete this dish?')) return;
+    try {
+      await deleteDoc(doc(db, 'menuItems', id));
+      await loadFoodMenu();
+    } catch (err) {
+      console.error('Delete dish failed:', err);
+      alert('Could not delete this dish.');
+    }
+  });
+}

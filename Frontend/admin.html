@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard – Whitmore Reans</title>
+<!-- logo from images/logo.png-->
+ <link rel="icon" href="images/logo.jpeg" type="image/jpeg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="admin.css?v=dishimg2">
 </head>
 <body>
 
@@ -25,7 +27,7 @@
       <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
       <li><a href="#" data-page="reservations">Reservations</a></li>
       <li><a href="#" data-page="menu">Events</a></li>
-      <li><a href="#" data-page="users">Users</a></li>
+      <li><a href="#" data-page="foodmenu">Menu</a></li>
       <li><a href="#" data-page="settings">Settings</a></li>
     </ul>
     <div class="admin-user">
@@ -58,6 +60,20 @@
           <div class="stat-info">
             <h3>Average Rating</h3>
             <p class="stat-number">4.8</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌐</div>
+          <div class="stat-info">
+            <h3>Domain Expiry</h3>
+            <p class="stat-number" id="domainDaysLeft">--</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📧</div>
+          <div class="stat-info">
+            <h3>Email expiry</h3>
+            <p class="stat-number" id="emailExpiryDaysLeft">--</p>
           </div>
         </div>
       </div>
@@ -100,6 +116,8 @@
               <th>Date</th>
               <th>Time</th>
               <th>Guests</th>
+              <th>Special Requests</th>
+              <th>Created</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -116,10 +134,20 @@
       <div class="page-header">
         <h1>Events</h1>
         <p>Create, edit and remove events shown on the public site</p>
+        <p> Add your photo to this from the Button below and Get the URL</p>
+        
       </div>
       <div class="admin-section">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <button id="addEventBtn" class="btn-primary">Add Event</button>
+          <button onclick="window.open('https://postimages.org/', '_blank')">
+  Upload photo
+</button>
+
+          <!--photo upload button-->
+          <div>
+           
+</div>
         </div>
         <table class="admin-table">
           <thead>
@@ -139,29 +167,49 @@
       </div>
     </div>
 
-    <!-- Users Page -->
-    <div class="admin-page" id="page-users">
+    <!-- Food Menu Page -->
+    <div class="admin-page" id="page-foodmenu">
       <div class="page-header">
-        <h1>Users</h1>
-        <p>Create and manage admin users</p>
+        <h1>Menu</h1>
+        <p>Import a CSV, or click <strong>Add / Edit image</strong> on any dish to paste a photo link.</p>
       </div>
       <div class="admin-section">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <button id="addUserBtn" class="btn-primary">Add User</button>
+        <h2>Import CSV</h2>
+        <p class="csv-help">Use columns: <strong>category</strong>, <strong>name</strong>, <strong>specification</strong>, <strong>price</strong>, <strong>image</strong>. Optional: <strong>tag</strong>. Or skip CSV images and use <strong>Add / Edit image</strong> on each dish below.</p>
+        <div class="csv-import-row">
+          <input type="file" id="menuCsvFile" accept=".csv,text/csv">
+          <label class="csv-mode"><input type="radio" name="menuImportMode" value="replace" checked> Replace current menu</label>
+          <label class="csv-mode"><input type="radio" name="menuImportMode" value="merge"> Add to current menu</label>
+          <button type="button" id="importMenuCsvBtn" class="btn-primary">Import CSV</button>
+          <button type="button" id="downloadSampleCsvBtn" class="btn-secondary">Download sample CSV</button>
+          <button type="button" class="btn-secondary" onclick="window.open('https://postimages.org/', '_blank')">Upload photo (get link)</button>
         </div>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="usersBody">
-            <!-- Loaded via JS -->
-          </tbody>
-        </table>
+        <p id="menuImportStatus" class="menu-import-status"></p>
+      </div>
+      <div class="admin-section" style="margin-top:20px;">
+        <div class="menu-admin-toolbar">
+          <h2>Current menu (<span id="menuItemCount">0</span>)</h2>
+          <input type="search" id="adminMenuSearch" placeholder="Search dishes or categories...">
+          <button type="button" id="clearMenuBtn" class="action-btn danger-btn">Clear all</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Dish</th>
+                <th>Specification</th>
+                <th>Price</th>
+                <th>Tag</th>
+                <th>Image</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="foodMenuBody">
+              <tr><td colspan="7">No dishes yet. Import a CSV to create the menu.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -175,7 +223,11 @@
         <form class="settings-form" id="settingsForm">
           <div class="form-group">
             <label>Restaurant Name</label>
-            <input type="text" id="settingName" value="Whitmore Reans Bars & Restaurant">
+            <input type="text" id="settingName" value="Whitmore Reans">
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea id="settingAddress">Bitterne Dr, Wolverhampton WV6 0QN</textarea>
           </div>
           <div class="form-group">
             <label>Email</label>
@@ -184,10 +236,6 @@
           <div class="form-group">
             <label>Phone</label>
             <input type="tel" id="settingPhone" value="+44 1902 000 000">
-          </div>
-          <div class="form-group">
-            <label>Address</label>
-            <textarea id="settingAddress">Bitterne Dr, Wolverhampton WV6 0QN</textarea>
           </div>
           <div class="form-group">
             <label>Hours (Mon-Thu)</label>
@@ -201,8 +249,38 @@
             <label>Hours (Sunday)</label>
             <input type="text" id="settingHoursSunday" value="12pm - 10pm">
           </div>
+          <div class="form-group">
+            <label>Delivery Links (Order Now)</label>
+            <p class="field-hint">Paste the restaurant page URL for each service. These appear in the Order Now popup.</p>
+            <input type="url" id="settingDeliverooUrl" placeholder="Deliveroo URL (https://deliveroo.co.uk/...)" style="margin-bottom:8px;">
+            <input type="url" id="settingJustEatUrl" placeholder="Just Eat URL (https://www.just-eat.co.uk/...)" style="margin-bottom:8px;">
+            <input type="url" id="settingUberEatsUrl" placeholder="Uber Eats URL (https://www.ubereats.com/...)">
+          </div>
+          <!-- Contact Management Section -->
+          <div class="form-group">
+            <label>Contact Options (WhatsApp, etc.)</label>
+            <div id="contactsList"></div>
+            <button type="button" id="addContactBtn" class="btn-secondary" style="margin-top:8px;">Add Contact</button>
+          </div>
+          <div class="form-group">
+            <label>Domain Expiry Date</label>
+            <input type="date" id="settingDomainExpiry">
+          </div>
+          <div class="form-group">
+            <label>Email Expiry Date</label>
+            <input type="date" id="settingEmailExpiry">
+          </div>
           <button type="submit" class="btn-primary">Save Changes</button>
         </form>
+      </div>
+
+      <div class="admin-section">
+        <h2>Developer Support</h2>
+        <p>For technical support, feature requests, or any issues, please contact the developer:</p>
+        <ul class="support-list" style="list-style: none; padding-left: 0;">
+          <li style="margin-bottom: 8px;"><strong>Contact:</strong> Ramesh Adhikari / Edumate Solutions</li>
+          <li style="margin-bottom: 8px;"><strong>Email:</strong> <a href="mailto:platformedumate@gmail.com">platformedumate@gmail.com</a></li>
+        </ul>
       </div>
     </div>
 
@@ -219,7 +297,7 @@
 </div>
 
 <!-- Admin JS module -->
-<script type="module" src="admin.js"></script>
+<script type="module" src="admin.js?v=dishimg2"></script>
 
 </body>
 </html>

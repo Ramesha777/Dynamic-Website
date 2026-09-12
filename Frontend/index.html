@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Whitmore Reans Bars & Restaurant</title>
+<link rel="icon" href="images/logo.jpeg" type="image/jpeg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=dishimg2">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <style>
   .loader-container {
@@ -65,10 +67,10 @@
 
 <!-- HOURS STRIP -->
 <div class="hours-strip">
-  <div class="hours-item"><strong>Mon-Thu:</strong> 12pm - 11pm</div>
-  <div class="hours-item"><strong>Fri-Sat:</strong> 12pm - 1am</div>
-  <div class="hours-item"><strong>Sunday:</strong> 12pm - 10pm</div>
-  <div class="hours-item">Bitterne Dr, Wolverhampton WV6 0QN</div>
+  <div class="hours-item"><strong>Mon-Thu:</strong> <span class="pub-hours-mon-thu">12pm - 11pm</span></div>
+  <div class="hours-item"><strong>Fri-Sat:</strong> <span class="pub-hours-fri-sat">12pm - 1am</span></div>
+  <div class="hours-item"><strong>Sunday:</strong> <span class="pub-hours-sun">12pm - 10pm</span></div>
+  <div class="hours-item"><span class="pub-address">Bitterne Dr, Wolverhampton WV6 0QN</span></div>
 </div>
 
 <!-- ABOUT -->
@@ -99,13 +101,22 @@
   <div class="section-label">What We Serve</div>
   <h2 class="section-title">Our <em>Menu</em></h2>
   <div class="menu-tabs">
-    <button class="menu-tab active" onclick="filterMenu(event,'starters')">Starters</button>
-    <button class="menu-tab" onclick="filterMenu(event,'mains')">Mains</button>
-    <button class="menu-tab" onclick="filterMenu(event,'grills')">Grills</button>
-    <button class="menu-tab" onclick="filterMenu(event,'desserts')">Desserts</button>
+    <button class="menu-tab active" data-category="starters" onclick="filterMenu(event,'starters')">Starters</button>
+    <button class="menu-tab" data-category="mains" onclick="filterMenu(event,'mains')">Mains</button>
+    <button class="menu-tab" data-category="grills" onclick="filterMenu(event,'grills')">Grills</button>
+    <button class="menu-tab" data-category="desserts" onclick="filterMenu(event,'desserts')">Desserts</button>
   </div>
   <div class="menu-grid" id="menuGrid">
     <!-- Filled by JS -->
+  </div>
+  <div class="menu-cta-row">
+    <div class="menu-order-wrap" id="menuOrderBtn">
+      <button type="button" class="btn-primary order-now-btn" id="orderNowBtn" aria-expanded="false" aria-haspopup="true">Order Now</button>
+      <div class="order-now-menu" id="orderNowMenu" role="menu" aria-label="Order from delivery apps">
+        <!-- Delivery options loaded from settings -->
+      </div>
+    </div>
+    <a href="menu.html" class="btn-outline explore-menu-btn">Explore Menu</a>
   </div>
 </section>
 
@@ -143,32 +154,83 @@
 <section id="gallery">
   <div class="section-label">Our Space</div>
   <h2 class="section-title">See the <em>Experience</em></h2>
-  <div class="gallery-grid">
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>The Main Dining Room</span></div>
-      <div class="gallery-icon">D</div>
+  <div class="gallery-carousel">
+    <div class="gallery-track">
+      <div class="gallery-slide">
+        <img src="images/dine.jpeg" alt="The Main Dining Room" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>The Main Dining Room</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/kitchen.png" alt="The Kitchen" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>The Kitchen</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/Part.png" alt="Garden Terrace" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>Event / Function </span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/bar.png" alt="The Bar Lounge" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>The Bar Lounge</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/pool .png" alt="The Pool Table" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>Pool Table</span>
+        </div>
+        
+      </div>
+      
+      
+      <!-- Duplicate slides for seamless infinite scroll -->
+      <div class="gallery-slide">
+        <img src="images/dine.jpeg" alt="The Main Dining Room" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>The Main Dining Room</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/kitchen.png  " alt="The Kitchen" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>The Kitchen</span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/Part.png" alt="Garden Terrace" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>Event / Function </span>
+        </div>
+      </div>
+      <div class="gallery-slide">
+        <img src="images/bar.png" alt="The Bar Lounge" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>The Bar Lounge</span>
+        </div>
+        
+      </div>
+      <div class="gallery-slide">
+        <img src="images/pool .png" alt="The Bar Lounge" class="gallery-slide-img">
+        <div class="gallery-slide-content">
+          <span>Pool Table</span>
+        </div>
+        
+      </div>
+      
     </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>The Kitchen</span></div>
-      <div class="gallery-icon">K</div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>Garden Terrace</span></div>
-      <div class="gallery-icon">G</div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>The Bar Lounge</span></div>
-      <div class="gallery-icon">B</div>
-    </div>
-    <div class="gallery-item">
-      <div class="gallery-item-bg"></div>
-      <div class="gallery-overlay"><span>Private Dining</span></div>
-      <div class="gallery-icon">P</div>
-    </div>
+  </div>
+  <div class="gallery-dots">
+    <span class="gallery-dot active"></span>
+    <span class="gallery-dot"></span>
+    <span class="gallery-dot"></span>
+    <span class="gallery-dot"></span>
+    <span class="gallery-dot"></span>
   </div>
 </section>
 
@@ -182,28 +244,28 @@
         <div class="contact-icon">A</div>
         <div>
           <strong>Address</strong>
-          <p>Bitterne Dr, Wolverhampton<br>WV6 0QN, England</p>
+          <p class="pub-address" style="white-space: pre-line;">Bitterne Dr, Wolverhampton<br>WV6 0QN, England</p>
         </div>
       </div>
       <div class="contact-item">
         <div class="contact-icon">P</div>
         <div>
           <strong>Phone</strong>
-          <p>+44 (0)1902 000 000</p>
+          <p><a href="#" class="pub-phone-link pub-phone" style="color:inherit;text-decoration:none;">+44 (0)1902 000 000</a></p>
         </div>
       </div>
       <div class="contact-item">
         <div class="contact-icon">E</div>
         <div>
           <strong>Email</strong>
-          <p>hello@whitmoreReans.co.uk</p>
+          <p><a href="#" class="pub-email-link pub-email" style="color:inherit;text-decoration:none;">hello@whitmoreReans.co.uk</a></p>
         </div>
       </div>
       <div class="contact-item">
         <div class="contact-icon">H</div>
         <div>
           <strong>Opening Hours</strong>
-          <p>Mon-Thu: 12pm-11pm<br>Fri-Sat: 12pm-1am<br>Sunday: 12pm-10pm</p>
+          <p>Mon-Thu: <span class="pub-hours-mon-thu">12pm-11pm</span><br>Fri-Sat: <span class="pub-hours-fri-sat">12pm-1am</span><br>Sunday: <span class="pub-hours-sun">12pm-10pm</span></p>
         </div>
       </div>
     </div>
@@ -273,23 +335,8 @@
   <button class="whatsapp-btn" title="Contact us on WhatsApp">
     <span class="whatsapp-icon">💬</span>
   </button>
-  <div class="whatsapp-menu">
-    <a href="https://wa.me/447949866859" class="whatsapp-option" target="_blank">
-      <span class="option-icon">P</span>
-      <div>
-        <strong>Reservations</strong>
-        <span>General Inquiries</span>
-        <p>+44 7949866859</p>
-      </div>
-    </a>
-    </a>
-    <a href="https://wa.me/447949866859" class="whatsapp-option" target="_blank">
-      <span class="option-icon">E</span>
-      <div>
-        <strong>Events Booking</strong>
-        <p>+44 7949866859</p>
-      </div>
-    </a>
+  <div class="whatsapp-menu" id="whatsappContactsMenu">
+    <!-- WhatsApp contacts will be loaded here dynamically -->
   </div>
 </div>
 
@@ -310,7 +357,7 @@
     </iframe>
   </div>
   <div class="map-info">
-    <p><strong>Bitterne Dr, Wolverhampton WV6 0QN, England</strong></p>
+    <p><strong class="pub-address">Bitterne Dr, Wolverhampton WV6 0QN, England</strong></p>
     <p>Located in the heart of Wolverhampton. Free parking available. Easily accessible by public transport.</p>
     <a href="https://maps.google.com/maps?q=Bitterne+Dr,+Wolverhampton+WV6+0QN" target="_blank" class="btn-primary">Get Directions</a>
   </div>
@@ -325,7 +372,7 @@
     <li><a href="#events">Events</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
-  <p class="footer-copy">2025 Whitmore Reans Bars & Restaurant - Wolverhampton, WV6 0QN</p>
+  <p class="footer-copy">2025 <span class="footer-restaurant-name">Whitmore Reans Bars & Restaurant</span> - <span class="pub-address">Wolverhampton, WV6 0QN</span></p>
 </footer>
 
 <!-- Firebase SDK -->
@@ -354,10 +401,71 @@
   // Load script.js as regular script after Firebase is initialized
   setTimeout(() => {
     const script = document.createElement('script');
-    script.src = 'script.js';
+    script.src = 'script.js?v=home-menu-static';
     script.onerror = () => console.error('Failed to load script.js');
     document.head.appendChild(script);
   }, 100);
+
+  // Reservation form handler
+  const reservationForm = document.getElementById('reservationForm');
+  if (reservationForm) {
+    reservationForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = reservationForm.querySelector('.submit-btn');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.textContent = 'Processing...';
+      submitBtn.disabled = true;
+
+      try {
+        // Get form values
+        const firstName = document.getElementById('resName').value.trim();
+        const lastName = document.getElementById('resLastName').value.trim();
+        const email = document.getElementById('resEmail').value.trim();
+        const phone = document.getElementById('resPhone').value.trim();
+        const date = document.getElementById('resDate').value;
+        const time = document.getElementById('resTime').value;
+        const guests = document.getElementById('resGuests').value;
+        const specialRequests = reservationForm.querySelector('textarea')?.value.trim() || '';
+        
+        // Generate unique 4-digit booking code
+        const bookingCode = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        // Prepare reservation data
+        const reservationData = {
+          firstName,
+          lastName,
+          name: `${firstName} ${lastName}`.trim(),
+          email,
+          phone,
+          date,
+          time,
+          guests,
+          specialRequests,
+          code: bookingCode,
+          status: 'Pending',
+          timestamp: new Date()
+        };
+        
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, 'reservations'), reservationData);
+        
+        // Show success message with booking ID
+        alert(`✅ Reservation Confirmed!\n\nYour Booking ID: ${bookingCode}\n\nPlease save this ID to check your reservation status.\n\nA confirmation message will be sent to you shortly.`);
+        
+        // Reset form
+        reservationForm.reset();
+        
+        console.log('Reservation saved with ID:', docRef.id, 'Code:', bookingCode);
+      } catch (error) {
+        console.error('Error saving reservation:', error);
+        alert('Failed to submit reservation. Please try again or call us directly.');
+      } finally {
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+      }
+    });
+  }
 </script>
 </body>
 </html>
