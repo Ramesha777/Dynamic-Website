@@ -10,6 +10,27 @@ function escapeHtml(s) {
   return s.toString().replace(/[&<>"']/g, c => map[c]);
 }
 
+function normalizeImageUrl(value) {
+  let url = String(value || '').trim();
+  if (!url) return '';
+  const htmlSrc = url.match(/src\s*=\s*["']([^"']+)["']/i);
+  if (htmlSrc) url = htmlSrc[1].trim();
+  const md = url.match(/\((https?:\/\/[^)\s]+)\)/i);
+  if (md) url = md[1].trim();
+  url = url.replace(/^<|>$/g, '').trim();
+  if (url.startsWith('//')) url = `https:${url}`;
+  if (/^www\./i.test(url)) url = `https://${url}`;
+  if (!/^https?:\/\//i.test(url)) return '';
+  return url;
+}
+
+function getDishImageUrl(item) {
+  if (!item || typeof item !== 'object') return '';
+  return normalizeImageUrl(
+    item.imageUrl || item.image || item.photoUrl || item.photo || item.img || item.imageLink || ''
+  );
+}
+
 let exploreItems = [];
 let activeCategory = 'all';
 
@@ -35,15 +56,30 @@ function renderCategoryTabs(categories) {
     `).join('');
 }
 
+function dishImageMarkup(url, alt) {
+  if (!url) return '';
+  const safeUrl = escapeHtml(url);
+  const safeAlt = escapeHtml(alt || 'Dish');
+  return `<div class="menu-card-image">
+      <img src="${safeUrl}" alt="${safeAlt}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+        onerror="if(!this.dataset.retry){this.dataset.retry='1';const u=this.src;this.removeAttribute('referrerpolicy');this.removeAttribute('src');this.src=u;}else{this.parentElement.classList.add('is-broken');}">
+    </div>`;
+}
+
 function dishCard(item) {
+  const url = getDishImageUrl(item);
+  const image = dishImageMarkup(url, item.name);
   return `
-    <div class="menu-card">
-      <div class="menu-card-header">
-        <h3>${escapeHtml(item.name || '')}</h3>
-        <span class="menu-price">${escapeHtml(item.price || '')}</span>
+    <div class="menu-card${image ? ' has-image' : ''}">
+      ${image}
+      <div class="menu-card-body">
+        <div class="menu-card-header">
+          <h3>${escapeHtml(item.name || '')}</h3>
+          <span class="menu-price">${escapeHtml(item.price || '')}</span>
+        </div>
+        ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+        ${item.tag ? `<span class="menu-tag">${escapeHtml(item.tag)}</span>` : ''}
       </div>
-      ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
-      ${item.tag ? `<span class="menu-tag">${escapeHtml(item.tag)}</span>` : ''}
     </div>
   `;
 }

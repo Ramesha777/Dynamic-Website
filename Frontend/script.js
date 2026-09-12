@@ -31,33 +31,33 @@ function escapeHtml(s) {
   if (!s) return '';
   const map = {
     '&': '&amp;',
-    '<': '<',
-    '>': '>',
-    '"': '"',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
     "'": '&#039;'
   };
   return s.toString().replace(/[&<>"']/g, c => map[c]);
 }
 
-// Filter menu by category
+// Filter menu by category (homepage preview — static sample dishes only)
 function filterMenu(event, category) {
-  document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
-  const activeTab = document.querySelector(`.menu-tab[data-category="${category}"]`);
+  document.querySelectorAll('#menu .menu-tab').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`#menu .menu-tab[data-category="${category}"]`);
   if (activeTab) activeTab.classList.add('active');
-  
+
   const grid = document.getElementById('menuGrid');
   if (!grid) return;
-  
+
   grid.innerHTML = '';
-  menuData[category].forEach(item => {
+  (menuData[category] || []).forEach(item => {
     grid.innerHTML += `
       <div class="menu-card">
         <div class="menu-card-header">
-          <h3>${item.name}</h3>
-          <span class="menu-price">${item.price}</span>
+          <h3>${escapeHtml(item.name)}</h3>
+          <span class="menu-price">${escapeHtml(item.price)}</span>
         </div>
-        <p>${item.desc}</p>
-        <span class="menu-tag">${item.tag}</span>
+        <p>${escapeHtml(item.desc)}</p>
+        <span class="menu-tag">${escapeHtml(item.tag)}</span>
       </div>
     `;
   });
@@ -408,7 +408,7 @@ function initOrderNowPopup() {
   });
 }
 
-// Initialize menu if on menu page
+// Initialize homepage menu preview (static sample). Full menu + photos are on menu.html.
 if (document.getElementById('menuGrid')) {
   filterMenu(null, 'starters');
 }

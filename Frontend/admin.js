@@ -860,6 +860,35 @@ document.addEventListener('click', (e) => {
 let foodMenuItems = [];
 let foodMenuControlsWired = false;
 
+function normalizeImageUrl(value) {
+  let url = String(value || '').trim();
+  if (!url) return '';
+
+  // Allow pasting an <img src="..."> snippet from image hosts
+  const htmlSrc = url.match(/src\s*=\s*["']([^"']+)["']/i);
+  if (htmlSrc) url = htmlSrc[1].trim();
+
+  // Markdown ![alt](url)
+  const md = url.match(/\((https?:\/\/[^)\s]+)\)/i);
+  if (md) url = md[1].trim();
+
+  url = url.replace(/^<|>$/g, '').trim();
+
+  if (url.startsWith('//')) url = `https:${url}`;
+  if (/^www\./i.test(url)) url = `https://${url}`;
+
+  if (!/^https?:\/\//i.test(url)) return '';
+  // Viewer pages are not direct images — reject obvious non-file postimg share pages without /i.
+  return url;
+}
+
+function getDishImageUrl(item) {
+  if (!item || typeof item !== 'object') return '';
+  return normalizeImageUrl(
+    item.imageUrl || item.image || item.photoUrl || item.photo || item.img || item.imageLink || ''
+  );
+}
+
 function csvHeaderKey(header) {
   const h = (header || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
   if (['category', 'cat', 'section', 'type'].includes(h)) return 'category';
@@ -867,6 +896,7 @@ function csvHeaderKey(header) {
   if (['specification', 'specifications', 'spec', 'specs', 'description', 'desc', 'details'].includes(h)) return 'description';
   if (['price', 'cost', 'amount'].includes(h)) return 'price';
   if (['tag', 'tags', 'label', 'note', 'notes'].includes(h)) return 'tag';
+  if (['image', 'imageurl', 'imagelink', 'photo', 'photourl', 'photolink', 'picture', 'pic', 'img', 'imgurl', 'imagelinks', 'dishimage', 'dishphoto'].includes(h)) return 'imageUrl';
   return '';
 }
 
@@ -923,7 +953,7 @@ function rowsToMenuItems(rows) {
   const items = [];
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const item = { category: '', name: '', description: '', price: '', tag: '' };
+    const item = { category: '', name: '', description: '', price: '', tag: '', imageUrl: '' };
     keys.forEach((key, idx) => {
       if (key) item[key] = row[idx] || '';
     });
@@ -932,6 +962,7 @@ function rowsToMenuItems(rows) {
     item.description = (item.description || '').trim();
     item.price = formatMenuPrice(item.price);
     item.tag = (item.tag || '').trim();
+    item.imageUrl = normalizeImageUrl(item.imageUrl);
     if (item.name) {
       item.sortOrder = items.length;
       items.push(item);
@@ -974,7 +1005,7 @@ async function loadFoodMenu() {
     renderFoodMenuTable();
   } catch (err) {
     console.error('Error loading food menu:', err);
-    tbody.innerHTML = '<tr><td colspan="6">Could not load menu. Check console for details.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">Could not load menu. Check console for details.</td></tr>';
   }
 }
 
@@ -984,33 +1015,42 @@ function renderFoodMenuTable() {
   const q = (document.getElementById('adminMenuSearch')?.value || '').toLowerCase().trim();
   const rows = foodMenuItems.filter(item => {
     if (!q) return true;
-    return [item.category, item.name, item.description, item.tag, item.price]
+    return [item.category, item.name, item.description, item.tag, item.price, item.imageUrl]
       .join(' ')
       .toLowerCase()
       .includes(q);
   });
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6">${foodMenuItems.length ? 'No matching dishes.' : 'No dishes yet. Import a CSV to create the menu.'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7">${foodMenuItems.length ? 'No matching dishes.' : 'No dishes yet. Import a CSV to create the menu.'}</td></tr>`;
     return;
   }
-  tbody.innerHTML = rows.map(item => `
+  tbody.innerHTML = rows.map(item => {
+    const url = getDishImageUrl(item);
+    const photo = url
+      ? `<img class="menu-admin-thumb" src="${escapeHtml(url)}" alt="${escapeHtml(item.name || 'Dish')}" referrerpolicy="no-referrer" onerror="if(!this.dataset.retry){this.dataset.retry='1';const u=this.src;this.removeAttribute('referrerpolicy');this.removeAttribute('src');this.src=u;}else{this.outerHTML='<span class=muted>Link broken</span>';}">`
+      : '<span class="muted">No photo</span>';
+    return `
     <tr>
       <td>${escapeHtml(item.category || '')}</td>
       <td>${escapeHtml(item.name || '')}</td>
       <td>${escapeHtml(item.description || '')}</td>
       <td>${escapeHtml(item.price || '')}</td>
       <td>${escapeHtml(item.tag || '')}</td>
-      <td><button type="button" class="action-btn danger-btn delete-menu-item-btn" data-id="${escapeHtml(item.id)}">Delete</button></td>
-    </tr>
-  `).join('');
+      <td class="menu-admin-photo-cell">${photo}</td>
+      <td>
+        <button type="button" class="action-btn edit-menu-item-btn" data-id="${escapeHtml(item.id)}">Add / Edit image</button>
+        <button type="button" class="action-btn danger-btn delete-menu-item-btn" data-id="${escapeHtml(item.id)}">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function downloadSampleMenuCsv() {
   const csv = [
-    'category,name,specification,price,tag',
-    'Starters,Soya Manchurian,Marinated soya pieces in chef special manchurian sauce,9.25,Veg',
-    'Mains,Garlic Chilli Chicken,Chicken cooked with chilli ginger and garlic,9.99,Chef Special',
-    'Desserts,Gulab Jamun and Ice Cream,Warm gulab jamun served with ice cream,4.99,Indian Style'
+    'category,name,specification,price,tag,image',
+    'Starters,Soya Manchurian,Marinated soya pieces in chef special manchurian sauce,9.25,Veg,https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=80',
+    'Mains,Garlic Chilli Chicken,Chicken cooked with chilli ginger and garlic,9.99,Chef Special,https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=800&q=80',
+    'Desserts,Gulab Jamun and Ice Cream,Warm gulab jamun served with ice cream,4.99,Indian Style,https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&q=80'
   ].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1034,7 +1074,7 @@ async function importMenuCsv() {
     const text = await file.text();
     const items = rowsToMenuItems(parseCsvText(text));
     if (!items.length) {
-      setMenuImportStatus('No valid dishes found. Check that the CSV has category, name, specification and price columns.', true);
+      setMenuImportStatus('No valid dishes found. Check that the CSV has category, name, specification, price and optional image columns.', true);
       return;
     }
     if (mode === 'replace') {
@@ -1060,7 +1100,11 @@ async function importMenuCsv() {
     });
     await commitBatches(adds);
     const categories = [...new Set(items.map(i => i.category))];
-    setMenuImportStatus(`Imported ${items.length} dish(es) across ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}.`);
+    const withImages = items.filter(i => getDishImageUrl(i)).length;
+    const imageNote = withImages
+      ? `${withImages} with photos.`
+      : 'No image links found — add an "image" column with full https:// photo URLs, then re-import.';
+    setMenuImportStatus(`Imported ${items.length} dish(es) across ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}. ${imageNote}`);
     if (fileInput) fileInput.value = '';
     await loadFoodMenu();
   } catch (err) {
@@ -1087,6 +1131,65 @@ async function clearFoodMenu() {
   }
 }
 
+function showDishImageModal(item) {
+  if (!item?.id) return;
+  const currentUrl = getDishImageUrl(item);
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.inset = '0';
+  modal.style.zIndex = '9999';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.background = 'rgba(0,0,0,0.5)';
+  modal.innerHTML = `
+    <div style="background:#fff;padding:22px;border-radius:10px;width:min(480px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.2);">
+      <h3 style="margin:0 0 6px;">Dish photo</h3>
+      <p style="margin:0 0 14px;color:#666;font-size:14px;">${escapeHtml(item.name || 'Dish')} · ${escapeHtml(item.category || '')}</p>
+      <label style="display:block;font-weight:600;margin-bottom:6px;">Image link (direct https URL)</label>
+      <input id="dishImageUrl" type="url" placeholder="https://i.postimg.cc/....jpg" value="${escapeHtml(currentUrl)}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;">
+      <p style="margin:8px 0 0;color:#888;font-size:12px;">Tip: on Postimages, copy <strong>Direct link</strong>. Leave empty to remove the photo.</p>
+      <div id="dishImagePreview" style="margin-top:14px;min-height:120px;background:#f5f5f5;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        ${currentUrl
+          ? `<img src="${escapeHtml(currentUrl)}" alt="Preview" style="width:100%;max-height:200px;object-fit:cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=color:#c00>Could not load this link</span>'">`
+          : '<span style="color:#999">No image yet</span>'}
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button type="button" id="dishImageCancel">Cancel</button>
+        <button type="button" id="dishImageSave" class="btn-primary" style="margin:0;">Save photo</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const input = modal.querySelector('#dishImageUrl');
+  const preview = modal.querySelector('#dishImagePreview');
+  const updatePreview = () => {
+    const url = normalizeImageUrl(input.value);
+    if (!url) {
+      preview.innerHTML = '<span style="color:#999">No image yet</span>';
+      return;
+    }
+    preview.innerHTML = `<img src="${escapeHtml(url)}" alt="Preview" style="width:100%;max-height:200px;object-fit:cover;" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='<span style=color:#c00>Could not load this link</span>'">`;
+  };
+  input.addEventListener('input', updatePreview);
+  modal.querySelector('#dishImageCancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  modal.querySelector('#dishImageSave').addEventListener('click', async () => {
+    const imageUrl = normalizeImageUrl(input.value);
+    try {
+      await updateDoc(doc(db, 'menuItems', item.id), { imageUrl });
+      modal.remove();
+      await loadFoodMenu();
+    } catch (err) {
+      console.error('Save dish image failed:', err);
+      alert('Could not save the dish photo.');
+    }
+  });
+}
+
 function wireFoodMenuControls() {
   if (foodMenuControlsWired) return;
   foodMenuControlsWired = true;
@@ -1095,6 +1198,13 @@ function wireFoodMenuControls() {
   document.getElementById('clearMenuBtn')?.addEventListener('click', clearFoodMenu);
   document.getElementById('adminMenuSearch')?.addEventListener('input', renderFoodMenuTable);
   document.getElementById('foodMenuBody')?.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('.edit-menu-item-btn');
+    if (editBtn) {
+      const id = editBtn.getAttribute('data-id');
+      const item = foodMenuItems.find(x => x.id === id);
+      if (item) showDishImageModal(item);
+      return;
+    }
     const btn = e.target.closest('.delete-menu-item-btn');
     if (!btn) return;
     const id = btn.getAttribute('data-id');

@@ -377,6 +377,66 @@ section { padding: 7rem 4rem; }
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-card.has-image {
+  padding: 0;
+}
+
+.menu-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.menu-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.menu-card-image.is-broken {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-card-image.is-broken img {
+  display: none;
+}
+
+.menu-card-image.is-broken::after {
+  content: 'Photo unavailable';
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.menu-card.has-image:has(.menu-card-image.is-broken) {
+  padding: 0;
+}
+
+.menu-card.has-image:has(.menu-card-image.is-broken) .menu-card-body {
+  padding: 1.4rem 1.6rem 1.6rem;
+}
+
+.menu-card-body {
+  padding: 0;
+}
+
+.menu-card.has-image .menu-card-body {
+  padding: 1.4rem 1.6rem 1.6rem;
+}
+
+@media (max-width: 600px) {
+  .menu-card-image { height: 170px; }
 }
 
 .menu-card::before {

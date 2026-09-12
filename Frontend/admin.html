@@ -7,7 +7,7 @@
 <!-- logo from images/logo.png-->
  <link rel="icon" href="images/logo.jpeg" type="image/jpeg">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="admin.css?v=dishimg2">
 </head>
 <body>
 
@@ -171,17 +171,18 @@
     <div class="admin-page" id="page-foodmenu">
       <div class="page-header">
         <h1>Menu</h1>
-        <p>Import a CSV to auto-create categories, dishes, specifications and prices.</p>
+        <p>Import a CSV, or click <strong>Add / Edit image</strong> on any dish to paste a photo link.</p>
       </div>
       <div class="admin-section">
         <h2>Import CSV</h2>
-        <p class="csv-help">Use columns: <strong>category</strong>, <strong>name</strong>, <strong>specification</strong>, <strong>price</strong>. Optional: <strong>tag</strong>.</p>
+        <p class="csv-help">Use columns: <strong>category</strong>, <strong>name</strong>, <strong>specification</strong>, <strong>price</strong>, <strong>image</strong>. Optional: <strong>tag</strong>. Or skip CSV images and use <strong>Add / Edit image</strong> on each dish below.</p>
         <div class="csv-import-row">
           <input type="file" id="menuCsvFile" accept=".csv,text/csv">
           <label class="csv-mode"><input type="radio" name="menuImportMode" value="replace" checked> Replace current menu</label>
           <label class="csv-mode"><input type="radio" name="menuImportMode" value="merge"> Add to current menu</label>
           <button type="button" id="importMenuCsvBtn" class="btn-primary">Import CSV</button>
           <button type="button" id="downloadSampleCsvBtn" class="btn-secondary">Download sample CSV</button>
+          <button type="button" class="btn-secondary" onclick="window.open('https://postimages.org/', '_blank')">Upload photo (get link)</button>
         </div>
         <p id="menuImportStatus" class="menu-import-status"></p>
       </div>
@@ -200,11 +201,12 @@
                 <th>Specification</th>
                 <th>Price</th>
                 <th>Tag</th>
+                <th>Image</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="foodMenuBody">
-              <tr><td colspan="6">No dishes yet. Import a CSV to create the menu.</td></tr>
+              <tr><td colspan="7">No dishes yet. Import a CSV to create the menu.</td></tr>
             </tbody>
           </table>
         </div>
@@ -295,7 +297,7 @@
 </div>
 
 <!-- Admin JS module -->
-<script type="module" src="admin.js"></script>
+<script type="module" src="admin.js?v=dishimg2"></script>
 
 </body>
 </html>
