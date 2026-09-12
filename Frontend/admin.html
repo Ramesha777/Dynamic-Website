@@ -27,6 +27,7 @@
       <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
       <li><a href="#" data-page="reservations">Reservations</a></li>
       <li><a href="#" data-page="menu">Events</a></li>
+      <li><a href="#" data-page="foodmenu">Menu</a></li>
       <li><a href="#" data-page="settings">Settings</a></li>
     </ul>
     <div class="admin-user">
@@ -166,6 +167,50 @@
       </div>
     </div>
 
+    <!-- Food Menu Page -->
+    <div class="admin-page" id="page-foodmenu">
+      <div class="page-header">
+        <h1>Menu</h1>
+        <p>Import a CSV to auto-create categories, dishes, specifications and prices.</p>
+      </div>
+      <div class="admin-section">
+        <h2>Import CSV</h2>
+        <p class="csv-help">Use columns: <strong>category</strong>, <strong>name</strong>, <strong>specification</strong>, <strong>price</strong>. Optional: <strong>tag</strong>.</p>
+        <div class="csv-import-row">
+          <input type="file" id="menuCsvFile" accept=".csv,text/csv">
+          <label class="csv-mode"><input type="radio" name="menuImportMode" value="replace" checked> Replace current menu</label>
+          <label class="csv-mode"><input type="radio" name="menuImportMode" value="merge"> Add to current menu</label>
+          <button type="button" id="importMenuCsvBtn" class="btn-primary">Import CSV</button>
+          <button type="button" id="downloadSampleCsvBtn" class="btn-secondary">Download sample CSV</button>
+        </div>
+        <p id="menuImportStatus" class="menu-import-status"></p>
+      </div>
+      <div class="admin-section" style="margin-top:20px;">
+        <div class="menu-admin-toolbar">
+          <h2>Current menu (<span id="menuItemCount">0</span>)</h2>
+          <input type="search" id="adminMenuSearch" placeholder="Search dishes or categories...">
+          <button type="button" id="clearMenuBtn" class="action-btn danger-btn">Clear all</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Dish</th>
+                <th>Specification</th>
+                <th>Price</th>
+                <th>Tag</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="foodMenuBody">
+              <tr><td colspan="6">No dishes yet. Import a CSV to create the menu.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings Page -->
     <div class="admin-page" id="page-settings">
       <div class="page-header">
@@ -201,6 +246,13 @@
           <div class="form-group">
             <label>Hours (Sunday)</label>
             <input type="text" id="settingHoursSunday" value="12pm - 10pm">
+          </div>
+          <div class="form-group">
+            <label>Delivery Links (Order Now)</label>
+            <p class="field-hint">Paste the restaurant page URL for each service. These appear in the Order Now popup.</p>
+            <input type="url" id="settingDeliverooUrl" placeholder="Deliveroo URL (https://deliveroo.co.uk/...)" style="margin-bottom:8px;">
+            <input type="url" id="settingJustEatUrl" placeholder="Just Eat URL (https://www.just-eat.co.uk/...)" style="margin-bottom:8px;">
+            <input type="url" id="settingUberEatsUrl" placeholder="Uber Eats URL (https://www.ubereats.com/...)">
           </div>
           <!-- Contact Management Section -->
           <div class="form-group">

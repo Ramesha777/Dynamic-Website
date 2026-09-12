@@ -3,7 +3,7 @@ import { firebaseConfig } from '../Backend/firebaseconfig.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, limit, getDocs, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Initialize Firebase (modular)
 const app = initializeApp(firebaseConfig);
@@ -29,6 +29,7 @@ onAuthStateChanged(auth, (user) => {
     loadAllReservations();
     loadEvents();
     loadSettings();
+    loadFoodMenu();
     
     // Wire settings form after user is authenticated
     setTimeout(() => {
@@ -39,6 +40,7 @@ onAuthStateChanged(auth, (user) => {
       }
       const addEventBtn = document.getElementById('addEventBtn');
       if (addEventBtn) addEventBtn.addEventListener('click', (e) => { e.preventDefault(); showEventModal(); });
+      wireFoodMenuControls();
     }, 200);
   } else {
     // User is not logged in
@@ -121,6 +123,7 @@ navLinks.forEach(link => {
     if (page === 'reservations') loadAllReservations();
     // Load events when opening Events page (page key is 'menu')
     if (page === 'menu') loadEvents();
+    if (page === 'foodmenu') loadFoodMenu();
   });
 });
 
@@ -581,6 +584,13 @@ async function loadSettings() {
       document.getElementById('settingHoursFridaySaturday').value = data.hoursFridaySaturday || '12pm - 1am';
       document.getElementById('settingHoursSunday').value = data.hoursSunday || '12pm - 10pm';
 
+      const deliverooEl = document.getElementById('settingDeliverooUrl');
+      const justEatEl = document.getElementById('settingJustEatUrl');
+      const uberEatsEl = document.getElementById('settingUberEatsUrl');
+      if (deliverooEl) deliverooEl.value = data.deliverooUrl || '';
+      if (justEatEl) justEatEl.value = data.justEatUrl || '';
+      if (uberEatsEl) uberEatsEl.value = data.uberEatsUrl || '';
+
       // Load contacts
       renderContactsList(data.contacts || []);
 
@@ -665,6 +675,9 @@ async function handleSettingsSubmit(e) {
     const hoursMondayThursday = document.getElementById('settingHoursMondayThursday').value.trim();
     const hoursFridaySaturday = document.getElementById('settingHoursFridaySaturday').value.trim();
     const hoursSunday = document.getElementById('settingHoursSunday').value.trim();
+    const deliverooUrl = document.getElementById('settingDeliverooUrl')?.value.trim() || '';
+    const justEatUrl = document.getElementById('settingJustEatUrl')?.value.trim() || '';
+    const uberEatsUrl = document.getElementById('settingUberEatsUrl')?.value.trim() || '';
     const domainExpiryDate = document.getElementById('settingDomainExpiry').value;
     const emailExpiryDate = document.getElementById('settingEmailExpiry').value;
 
@@ -690,6 +703,9 @@ async function handleSettingsSubmit(e) {
     if (hoursMondayThursday) updateData.hoursMondayThursday = hoursMondayThursday;
     if (hoursFridaySaturday) updateData.hoursFridaySaturday = hoursFridaySaturday;
     if (hoursSunday) updateData.hoursSunday = hoursSunday;
+    updateData.deliverooUrl = deliverooUrl;
+    updateData.justEatUrl = justEatUrl;
+    updateData.uberEatsUrl = uberEatsUrl;
     if (domainExpiryDate) updateData.domainExpiryDate = domainExpiryDate;
     if (emailExpiryDate) updateData.emailExpiryDate = emailExpiryDate;
     
@@ -839,3 +855,256 @@ document.addEventListener('click', (e) => {
     }, 1500);
   }
 });
+
+// ============ FOOD MENU (CSV IMPORT) ============
+let foodMenuItems = [];
+let foodMenuControlsWired = false;
+
+function csvHeaderKey(header) {
+  const h = (header || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (['category', 'cat', 'section', 'type'].includes(h)) return 'category';
+  if (['name', 'dish', 'dishname', 'item', 'title', 'itemname'].includes(h)) return 'name';
+  if (['specification', 'specifications', 'spec', 'specs', 'description', 'desc', 'details'].includes(h)) return 'description';
+  if (['price', 'cost', 'amount'].includes(h)) return 'price';
+  if (['tag', 'tags', 'label', 'note', 'notes'].includes(h)) return 'tag';
+  return '';
+}
+
+function parseCsvText(text) {
+  const src = String(text || '').replace(/^\uFEFF/, '');
+  const rows = [];
+  let row = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') {
+        cur += '"';
+        i++;
+      } else if (c === '"') {
+        inQuotes = false;
+      } else {
+        cur += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',' || c === ';') {
+      row.push(cur.trim());
+      cur = '';
+    } else if (c === '\n') {
+      row.push(cur.trim());
+      rows.push(row);
+      row = [];
+      cur = '';
+    } else if (c !== '\r') {
+      cur += c;
+    }
+  }
+  if (cur.length || row.length) {
+    row.push(cur.trim());
+    rows.push(row);
+  }
+  return rows.filter(r => r.some(cell => cell !== ''));
+}
+
+function formatMenuPrice(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^[£$€]/.test(raw)) return raw;
+  const num = raw.replace(/[^0-9.]/g, '');
+  return num ? `£${num}` : raw;
+}
+
+function rowsToMenuItems(rows) {
+  if (!rows.length) return [];
+  const keys = rows[0].map(csvHeaderKey);
+  const items = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const item = { category: '', name: '', description: '', price: '', tag: '' };
+    keys.forEach((key, idx) => {
+      if (key) item[key] = row[idx] || '';
+    });
+    item.name = (item.name || '').trim();
+    item.category = (item.category || 'Uncategorised').trim() || 'Uncategorised';
+    item.description = (item.description || '').trim();
+    item.price = formatMenuPrice(item.price);
+    item.tag = (item.tag || '').trim();
+    if (item.name) {
+      item.sortOrder = items.length;
+      items.push(item);
+    }
+  }
+  return items;
+}
+
+function setMenuImportStatus(message, isError) {
+  const el = document.getElementById('menuImportStatus');
+  if (!el) return;
+  el.textContent = message || '';
+  el.style.color = isError ? '#d9534f' : '#155724';
+}
+
+async function commitBatches(ops) {
+  for (let i = 0; i < ops.length; i += 400) {
+    const batch = writeBatch(db);
+    ops.slice(i, i + 400).forEach(op => op(batch));
+    await batch.commit();
+  }
+}
+
+async function loadFoodMenu() {
+  const tbody = document.getElementById('foodMenuBody');
+  const countEl = document.getElementById('menuItemCount');
+  if (!tbody) return;
+  try {
+    const snap = await getDocs(collection(db, 'menuItems'));
+    foodMenuItems = [];
+    snap.forEach(docSnap => {
+      foodMenuItems.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    foodMenuItems.sort((a, b) => {
+      const cat = String(a.category || '').localeCompare(String(b.category || ''));
+      if (cat !== 0) return cat;
+      return (a.sortOrder || 0) - (b.sortOrder || 0);
+    });
+    if (countEl) countEl.textContent = String(foodMenuItems.length);
+    renderFoodMenuTable();
+  } catch (err) {
+    console.error('Error loading food menu:', err);
+    tbody.innerHTML = '<tr><td colspan="6">Could not load menu. Check console for details.</td></tr>';
+  }
+}
+
+function renderFoodMenuTable() {
+  const tbody = document.getElementById('foodMenuBody');
+  if (!tbody) return;
+  const q = (document.getElementById('adminMenuSearch')?.value || '').toLowerCase().trim();
+  const rows = foodMenuItems.filter(item => {
+    if (!q) return true;
+    return [item.category, item.name, item.description, item.tag, item.price]
+      .join(' ')
+      .toLowerCase()
+      .includes(q);
+  });
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6">${foodMenuItems.length ? 'No matching dishes.' : 'No dishes yet. Import a CSV to create the menu.'}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(item => `
+    <tr>
+      <td>${escapeHtml(item.category || '')}</td>
+      <td>${escapeHtml(item.name || '')}</td>
+      <td>${escapeHtml(item.description || '')}</td>
+      <td>${escapeHtml(item.price || '')}</td>
+      <td>${escapeHtml(item.tag || '')}</td>
+      <td><button type="button" class="action-btn danger-btn delete-menu-item-btn" data-id="${escapeHtml(item.id)}">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+function downloadSampleMenuCsv() {
+  const csv = [
+    'category,name,specification,price,tag',
+    'Starters,Soya Manchurian,Marinated soya pieces in chef special manchurian sauce,9.25,Veg',
+    'Mains,Garlic Chilli Chicken,Chicken cooked with chilli ginger and garlic,9.99,Chef Special',
+    'Desserts,Gulab Jamun and Ice Cream,Warm gulab jamun served with ice cream,4.99,Indian Style'
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'menu-sample.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importMenuCsv() {
+  const fileInput = document.getElementById('menuCsvFile');
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    setMenuImportStatus('Choose a CSV file first.', true);
+    return;
+  }
+  const mode = document.querySelector('input[name="menuImportMode"]:checked')?.value || 'replace';
+  setMenuImportStatus('Importing...');
+  try {
+    const text = await file.text();
+    const items = rowsToMenuItems(parseCsvText(text));
+    if (!items.length) {
+      setMenuImportStatus('No valid dishes found. Check that the CSV has category, name, specification and price columns.', true);
+      return;
+    }
+    if (mode === 'replace') {
+      if (!confirm(`This will replace the current menu with ${items.length} dish(es). Continue?`)) {
+        setMenuImportStatus('');
+        return;
+      }
+      const existing = await getDocs(collection(db, 'menuItems'));
+      const deletes = [];
+      existing.forEach(docSnap => {
+        deletes.push(batch => batch.delete(docSnap.ref));
+      });
+      await commitBatches(deletes);
+    }
+    const startOrder = mode === 'merge' ? foodMenuItems.length : 0;
+    const adds = items.map((item, idx) => batch => {
+      const ref = doc(collection(db, 'menuItems'));
+      batch.set(ref, {
+        ...item,
+        sortOrder: startOrder + idx,
+        timestamp: new Date()
+      });
+    });
+    await commitBatches(adds);
+    const categories = [...new Set(items.map(i => i.category))];
+    setMenuImportStatus(`Imported ${items.length} dish(es) across ${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}.`);
+    if (fileInput) fileInput.value = '';
+    await loadFoodMenu();
+  } catch (err) {
+    console.error('CSV import failed:', err);
+    setMenuImportStatus('Import failed. Check the CSV format and try again.', true);
+  }
+}
+
+async function clearFoodMenu() {
+  if (!foodMenuItems.length) return;
+  if (!confirm('Delete the entire imported menu? This cannot be undone.')) return;
+  try {
+    const existing = await getDocs(collection(db, 'menuItems'));
+    const deletes = [];
+    existing.forEach(docSnap => {
+      deletes.push(batch => batch.delete(docSnap.ref));
+    });
+    await commitBatches(deletes);
+    await loadFoodMenu();
+    setMenuImportStatus('Menu cleared.');
+  } catch (err) {
+    console.error('Clear menu failed:', err);
+    alert('Could not clear the menu. Check console for details.');
+  }
+}
+
+function wireFoodMenuControls() {
+  if (foodMenuControlsWired) return;
+  foodMenuControlsWired = true;
+  document.getElementById('importMenuCsvBtn')?.addEventListener('click', importMenuCsv);
+  document.getElementById('downloadSampleCsvBtn')?.addEventListener('click', downloadSampleMenuCsv);
+  document.getElementById('clearMenuBtn')?.addEventListener('click', clearFoodMenu);
+  document.getElementById('adminMenuSearch')?.addEventListener('input', renderFoodMenuTable);
+  document.getElementById('foodMenuBody')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.delete-menu-item-btn');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (!id || !confirm('Delete this dish?')) return;
+    try {
+      await deleteDoc(doc(db, 'menuItems', id));
+      await loadFoodMenu();
+    } catch (err) {
+      console.error('Delete dish failed:', err);
+      alert('Could not delete this dish.');
+    }
+  });
+}

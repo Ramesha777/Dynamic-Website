@@ -28,5 +28,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Menu items: Public can read the full menu; only admins can import/edit/delete.
+    match /menuItems/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
